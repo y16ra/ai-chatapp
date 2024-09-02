@@ -25,7 +25,7 @@ type AppContextType = {
   setSelectRoomName: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
-const defalutContextData = {
+const defaultContextData = {
   user: null,
   userId: null,
   setUser: () => {},
@@ -35,7 +35,7 @@ const defalutContextData = {
   setSelectRoomName: () => {},
 };
 
-const AppContext = createContext<AppContextType>(defalutContextData);
+const AppContext = createContext<AppContextType>(defaultContextData);
 
 export function AppProvider({ children }: AppProviderProps) {
   const [user, setUser] = useState<User | null>(null);
