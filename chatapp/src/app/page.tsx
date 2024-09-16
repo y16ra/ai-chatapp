@@ -6,13 +6,6 @@ import { useAppContext } from "@/context/AppContext";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const { user } = useAppContext();
-  const router = useRouter();
-
-  if (!user) {
-    router.push("/auth/login");
-  }
-
   return (
     <div className="h-screen flex flex-col items-center justify-center">
       <div className="h-full flex" style={{ width: "1280px"}}>

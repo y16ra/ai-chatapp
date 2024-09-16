@@ -54,6 +54,10 @@ export function AppProvider({ children }: AppProviderProps) {
       }
     });
 
+    if (!user) {
+      router.push("/auth/login");
+    }
+  
     return () => {
       unsubscribe();
     };
