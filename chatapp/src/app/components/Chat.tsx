@@ -82,7 +82,13 @@ const Chat = () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ inputMessage }),
+      body: JSON.stringify({ 
+        inputMessage,
+        context: messages.map(message => ({
+          text: message.text,
+          sender: message.sender
+        }))
+      }),
     });
 
     setIsLoading(false);

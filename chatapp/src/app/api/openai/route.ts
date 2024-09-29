@@ -6,12 +6,19 @@ const openai = new OpenAI({
 });
 
 export async function POST(req: NextRequest) {
-  const { inputMessage } = await req.json();
-
+  const { inputMessage, context } = await req.json();
+  console.log(inputMessage, context);
   try {
     const gpt3Response = await openai.chat.completions.create({
-      messages: [{ role: "user", content: inputMessage }],
-      model: "gpt-3.5-turbo",
+      messages: [
+        ...context.map((msg: { text: string, sender: string }) => ({
+          role: msg.sender === "user" ? "user" : "assistant",
+          content: msg.text
+        })),
+        { role: "user", content: inputMessage }
+      ],
+      // model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
     });
 
     const botResponse = gpt3Response.choices[0].message.content;
