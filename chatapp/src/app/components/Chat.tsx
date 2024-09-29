@@ -6,7 +6,6 @@ import { db } from "../../../firebase";
 import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp } from "firebase/firestore";
 import { useAppContext } from "@/context/AppContext";
 import LoadingIcons from 'react-loading-icons'
-import OpenAI from "openai";
 
 type Message = {
   text: string;
@@ -15,10 +14,6 @@ type Message = {
 };
 
 const Chat = () => {
-  const openai = new OpenAI({
-    apiKey: process.env.NEXT_PUBLIC_OPENAI_KEY,
-    dangerouslyAllowBrowser: true,
-  });
 
   const { selectedRoom, selectRoomName } = useAppContext();
   const [inputMessage, setInputMessage] = useState<string>("");
@@ -82,14 +77,20 @@ const Chat = () => {
     setIsLoading(true);
 
     // Reply from the bot
-    const gpt3Response = await openai.chat.completions.create({
-      messages: [{ role: "user", content: inputMessage }],
-      model: "gpt-3.5-turbo",
+    const response = await fetch('/api/openai', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ inputMessage }),
     });
 
     setIsLoading(false);
 
-    const botResponse = gpt3Response.choices[0].message.content;
+    // const botResponse = gpt3Response.choices[0].message.content;
+    const data = await response.json();
+    const botResponse = data.botResponse;
+    console.log(botResponse);
     await addDoc(messageCollectionRef, {
       text: botResponse,
       sender: "bot",
