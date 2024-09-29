@@ -21,7 +21,14 @@ const RegisterPage = () => {
   } = useForm<Inputs>();
   const router = useRouter();
 
+  const isRegistrationEnabled = process.env.NEXT_PUBLIC_REGISTRATION_ENABLED === 'true'; // 登録機能の有効/無効を切り替えるフラグ
+
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    if (!isRegistrationEnabled) {
+      alert("現在、新規登録は一時的に無効化されています。");
+      return;
+    }
+
     await createUserWithEmailAndPassword(auth, data.email, data.password)
     .then((userCrendential) => {
         const user = userCrendential.user;
