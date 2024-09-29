@@ -6,8 +6,8 @@ const openai = new OpenAI({
 });
 
 export async function POST(req: NextRequest) {
-  const { inputMessage, context } = await req.json();
-  console.log(inputMessage, context);
+  const { inputMessage, context, model } = await req.json();
+  console.log(inputMessage, model);
   try {
     const gpt3Response = await openai.chat.completions.create({
       messages: [
@@ -17,8 +17,7 @@ export async function POST(req: NextRequest) {
         })),
         { role: "user", content: inputMessage }
       ],
-      // model: "gpt-3.5-turbo",
-      model: "gpt-4o-mini",
+      model: model || "gpt-4o-mini", // Default model
     });
 
     const botResponse = gpt3Response.choices[0].message.content;

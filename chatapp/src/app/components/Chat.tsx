@@ -19,10 +19,18 @@ const Chat = () => {
   const [inputMessage, setInputMessage] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
 
   const scrollDiv = useRef<HTMLDivElement>(null);
 
-  // Retrieve messages for the selected room from Firestore
+  // モデルの選択肢を配列で定義
+  const modelOptions = [
+    { value: "gpt-4o", label: "GPT-4o" },
+    { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+    { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" }
+  ];
+
+    // Retrieve messages for the selected room from Firestore
   useEffect(() => {
     if (selectedRoom) {
       const fetchMessages = async () => {
@@ -87,7 +95,8 @@ const Chat = () => {
         context: messages.map(message => ({
           text: message.text,
           sender: message.sender
-        }))
+        })),
+        model: selectedModel
       }),
     });
 
@@ -107,7 +116,21 @@ const Chat = () => {
   return (
     <div className="bg-gray-500 h-full flex flex-col p-4">
       <h1 className="text-2xl text-white font-semibold mb-4">{selectRoomName}</h1>
-        <div ref={scrollDiv} className="flex-grow overflow-y-auto mb-4">
+      <div className="mb-4">
+        <label className="text-white mr-2">Select AI Model:</label>
+        <select 
+          value={selectedModel} 
+          onChange={(e) => setSelectedModel(e.target.value)}
+          className="p-2 rounded border-2"
+        >
+          {modelOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div ref={scrollDiv} className="flex-grow overflow-y-auto mb-4">
           {messages.map((message, index) => (
             <div 
               key={index} 
