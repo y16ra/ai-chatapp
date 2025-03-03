@@ -1,8 +1,7 @@
-"use client";
-
-import { addDoc, collection, onSnapshot, orderBy, query, Timestamp, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, orderBy, query, Timestamp, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { BiLogOut } from "react-icons/bi";
+import { FaTrash } from "react-icons/fa";
 import { auth, db } from "../../../firebase";
 import { useAppContext } from "@/context/AppContext";
 
@@ -14,7 +13,7 @@ type Room = {
 
 const Sidebar = () => {
 
-  const { user, userId, setSelectedRoom, setSelectRoomName } = useAppContext();
+  const { user, userId, setSelectedRoom, setSelectRoomName, selectedRoom } = useAppContext();
 
   const [rooms, setRooms] = useState<Room[]>([]);
 
@@ -60,6 +59,32 @@ const Sidebar = () => {
     }
   };
 
+  // Delete a room and its messages
+  const deleteRoom = async (roomId: string, roomName: string) => {
+    if (window.confirm(`Are you sure you want to delete "${roomName}"? All messages in this room will be permanently deleted.`)) {
+      try {
+        // Delete all messages in the room
+        const roomRef = doc(db, "rooms", roomId);
+        const messagesRef = collection(roomRef, "messages");
+        const messagesSnapshot = await getDocs(messagesRef);
+        const deletePromises = messagesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+
+        // Delete the room document
+        await deleteDoc(roomRef);
+
+        // If the deleted room was selected, clear the selection
+        if (selectedRoom === roomId) {
+          setSelectedRoom(null);
+          setSelectRoomName(null);
+        }
+      } catch (error) {
+        console.error("Error deleting room:", error);
+        alert("Failed to delete the room. Please try again.");
+      }
+    }
+  };
+
   // Logout
   const handleLogout = () => {
     console.log("logout");
@@ -79,10 +104,23 @@ const Sidebar = () => {
         {rooms.map((room) => (
           <li
             key={room.id}
-            className="cursor-pointer border-b p-4 text-slate-100 hover:bg-slate-700 duration-150 "
-            onClick={() => selectRoom(room.id, room.name)}
+            className="flex items-center justify-between border-b p-4 text-slate-100 hover:bg-slate-700 duration-150"
           >
-            {room.name}
+            <span
+              className="cursor-pointer flex-grow"
+              onClick={() => selectRoom(room.id, room.name)}
+            >
+              {room.name}
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteRoom(room.id, room.name);
+              }}
+              className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-slate-600"
+            >
+              <FaTrash size={14} />
+            </button>
           </li>
         ))}
         </ul>
