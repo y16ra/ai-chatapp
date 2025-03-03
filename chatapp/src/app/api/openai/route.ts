@@ -5,9 +5,27 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+function addToMapIfDefined(map: Map<string, string>, key: string, value: string | undefined) {
+  if (value !== undefined) {
+    map.set(key, value);
+  }
+}
+
+const SUPPORTED_MODELS = [
+  'gpt-4o',
+  'gpt-4o-mini',
+  'o1',
+  'o1-mini'
+];
+
 export async function POST(req: NextRequest) {
   const { inputMessage, context, model } = await req.json();
   console.log(inputMessage, model);
+  if (!SUPPORTED_MODELS.includes(model)) {
+    return NextResponse.json({ error: 'Unsupported model' }, { status: 400 });
+  }
+  let botResponse = null;
+
   try {
     const gpt3Response = await openai.chat.completions.create({
       messages: [
@@ -18,11 +36,46 @@ export async function POST(req: NextRequest) {
         { role: "user", content: inputMessage }
       ],
       model: model || "gpt-4o-mini", // Default model
-    });
 
-    const botResponse = gpt3Response.choices[0].message.content;
+    });
+    botResponse = gpt3Response.choices[0].message.content;
+    console.log(botResponse);
     return NextResponse.json({ botResponse });
   } catch (error) {
     return NextResponse.json({ error: 'Error generating response from OpenAI' }, { status: 500 });
   }
+}
+
+// Vector Storeから関連情報を使った回答を取得する関数
+async function retrieveAgentData(inputMessage: string, assistantId: string) {
+  const thread = await openai.beta.threads.create({
+    messages: [{
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: inputMessage,
+        },
+      ],
+    }],
+  });
+  let run = await openai.beta.threads.runs.createAndPoll(
+    thread.id,
+    {
+      assistant_id: assistantId,
+    }
+  );
+  if (run.status === 'completed') {
+    const messages = await openai.beta.threads.messages.list(
+      run.thread_id
+    );
+    console.log(messages.data[0].content)
+    if (messages.data[0].content[0].type === "text") {
+
+      return messages.data[0].content[0].text.value;
+    }
+  } else {
+    console.log(run.status);
+  }
+  return null;
 }

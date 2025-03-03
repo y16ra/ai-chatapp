@@ -20,6 +20,7 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
+  const [selectedAgent, setSelectedAgent] = useState<string>("none");
 
   const scrollDiv = useRef<HTMLDivElement>(null);
 
@@ -27,8 +28,26 @@ const Chat = () => {
   const modelOptions = [
     { value: "gpt-4o", label: "GPT-4o" },
     { value: "gpt-4o-mini", label: "GPT-4o Mini" },
-    { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" }
+    { value: "o1", label: "o1" },
+    { value: "o1-mini", label: "o1-mini" },
+    { value: "claude-3-7-sonnet-latest", label: "Claude-3-7-Sonnet" },
+    { value: "claude-3-5-sonnet-latest", label: "Claude-3-5-Sonnet" },
+    { value: "claude-3-5-haiku-latest", label: "Claude-3-5-Haiku" },
   ];
+
+  // Check if the selected model is a Claude model
+  const isClaudeModel = (model: string): boolean => {
+    return model.startsWith('claude');
+  };
+
+  // Get the current AI provider based on the selected model
+  const getCurrentAIProvider = (): string => {
+    if (isClaudeModel(selectedModel)) {
+      return "Claude";
+    } else {
+      return "OpenAI";
+    }
+  };
 
     // Retrieve messages for the selected room from Firestore
   useEffect(() => {
@@ -84,13 +103,16 @@ const Chat = () => {
     setInputMessage("");
     setIsLoading(true);
 
+    // Determine which API endpoint to use based on the selected model
+    const apiEndpoint = isClaudeModel(selectedModel) ? '/api/claude' : '/api/openai';
+
     // Reply from the bot
-    const response = await fetch('/api/openai', {
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         inputMessage,
         context: messages.map(message => ({
           text: message.text,
@@ -102,7 +124,6 @@ const Chat = () => {
 
     setIsLoading(false);
 
-    // const botResponse = gpt3Response.choices[0].message.content;
     const data = await response.json();
     const botResponse = data.botResponse;
     console.log(botResponse);
@@ -116,31 +137,39 @@ const Chat = () => {
   return (
     <div className="bg-gray-500 h-full flex flex-col p-4">
       <h1 className="text-2xl text-white font-semibold mb-4">{selectRoomName}</h1>
-      <div className="mb-4">
-        <label className="text-white mr-2">Select AI Model:</label>
-        <select 
-          value={selectedModel} 
-          onChange={(e) => setSelectedModel(e.target.value)}
-          className="p-2 rounded border-2"
-        >
-          {modelOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+      <div className="flex mb-4 space-x-4 flex-wrap"> {/* フレックスボックスを使用して横並びに */}
+        <div className="flex items-center mb-2">
+          <label className="text-white mr-2">AI Provider:</label>
+          <span className="bg-blue-600 text-white px-2 py-1 rounded text-sm">
+            {getCurrentAIProvider()}
+          </span>
+        </div>
+        <div className="mb-2">
+          <label className="text-white mr-2">Select AI Model:</label>
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            className="px-3 py-2 bg-white text-gray-700 appearance-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            {modelOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       <div ref={scrollDiv} className="flex-grow overflow-y-auto mb-4">
           {messages.map((message, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className={message.sender === "user" ? "text-right" : "text-left"}>
                 <div
                   className={
                     message.sender === "user"
-                      ? "bg-blue-500 inline-block rounded px-4 py-2 mb-2"
-                    : "bg-green-500 inline-block rounded px-4 py-2 mb-2"
-                  }
+                    ? "bg-blue-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap"
+                    : "bg-green-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap"
+                      }
                 >
                 <p className="text-white">{message.text}</p>
               </div>

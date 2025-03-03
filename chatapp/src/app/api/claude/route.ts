@@ -6,9 +6,9 @@ const anthropic = new Anthropic({
 });
 
 const SUPPORTED_MODELS = [
-  'claude-3-opus-20240229',
-  'claude-3-sonnet-20240229',
-  'claude-2.1'
+  'claude-3-7-sonnet-latest',
+  'claude-3-5-sonnet-latest',
+  'claude-3-5-haiku-latest',
 ];
 
 export async function POST(req: NextRequest) {
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       botResponse: botResponse
     });
 
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     console.error('Claude API Error:', error);
     const statusCode = error.status || 500;
     const errorMessage = error.error?.message || 'Unknown API error';
-    
+
     return NextResponse.json(
       { error: `Claude API Error: ${errorMessage}` },
       { status: statusCode }
