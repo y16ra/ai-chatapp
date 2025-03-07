@@ -85,7 +85,13 @@ const Chat = () => {
   const startComposition = () => setComposition(true);
   const endComposition = () => setComposition(false);
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const handleSendMessage = async () => {
+    // Reset textarea height after sending
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
     console.log(inputMessage);
     if (!inputMessage.trim()) {
       return;
@@ -178,22 +184,48 @@ const Chat = () => {
           {isLoading && <LoadingIcons.TailSpin />}
       </div>
       <div className="flex-shrink-0 relative">
-          <input type="text" className="w-full p-2 pr-10 rounded border-2 focus:outline-none" placeholder="Type a message..."
+          <textarea 
+            ref={textareaRef}
+            className="w-full p-2 pr-10 rounded border-2 focus:outline-none resize-none overflow-hidden min-h-[40px]" 
+            placeholder="Type a message..."
             value={inputMessage}
             onCompositionStart={startComposition}
             onCompositionEnd={endComposition}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !isComposing) {
-                handleSendMessage();
+            onChange={(e) => {
+              setInputMessage(e.target.value);
+              
+              // Auto-resize textarea
+              if (textareaRef.current) {
+                textareaRef.current.style.height = 'auto';
+                textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
               }
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                if (e.metaKey) {
+                  // Command+Enter to send message
+                  e.preventDefault();
+                  handleSendMessage();
+                } else {
+                  // Auto-resize on Enter key press after the default line break is added
+                  setTimeout(() => {
+                    if (textareaRef.current) {
+                      textareaRef.current.style.height = 'auto';
+                      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+                    }
+                  }, 0);
+                }
+              }
+            }}
+            rows={1}
           />
-          <button className="absolute right-2 flex items-center inset-y-0 rounded"
-            onClick={() => handleSendMessage()}
+          <button 
+            className="absolute right-2 top-2 rounded"
+            onClick={handleSendMessage}
           >
             <GoPaperAirplane />
           </button>
+          <span className="absolute right-2 bottom-1 text-xs text-gray-400 italic">⌘+Enter to send</span>
         </div>
     </div>
 
