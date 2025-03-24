@@ -2,6 +2,15 @@
 
 This is a chat application built with Next.js, TypeScript, and Firebase.
 
+## Features
+
+- Create a chat application using AI.
+- Utilize OpenAI API and Anthropic API.
+- Allow users to select and use different AI models.
+- Implement user registration and login functionality.
+- Save and display chat history.
+- Create chat rooms and save/display chats per room.
+
 ## Project Structure
 
 ```
@@ -28,10 +37,23 @@ This is a chat application built with Next.js, TypeScript, and Firebase.
 
 ## Technologies Used
 
-- Next.js - React framework
-- TypeScript - Type safety
-- Firebase - Backend services
-- Tailwind CSS - Styling
+### Frontend
+- **Next.js (v14.2.25)**: React-based full-stack framework.
+- **React (v18)**: UI library.
+- **TypeScript (v5)**: Language for type-safe development.
+- **Tailwind CSS (v3.4.17)**: Utility-first CSS framework.
+
+### Backend/Infrastructure
+- **Firebase (v11.4.0)**: Google's backend service.
+- **OpenAI API (v4.87.4)**: Used for AI functionalities.
+- **Anthropic API (v0.39.0)**: Used for AI functionalities.
+
+### Development Tools
+- **ESLint (v8)**: Maintains code quality and style.
+- **PostCSS (v8)**: CSS transformation and optimization.
+- **React Hook Form (v7.54.2)**: Form handling library.
+- **React Icons (v5.5.0)**: Icon library.
+- **React Loading Icons (v1.1.0)**: Loading animations.
 
 ## Environment Setup
 
@@ -57,6 +79,10 @@ cp .env.example .env.local
 ### OpenAI Configuration
 - `OPENAI_API_KEY`: Your OpenAI API key
 
+### Anthropic Configuration
+- `ANTHROPIC_API_KEY`: Your Anthropic API key
+
 You can obtain these values from:
 - Firebase: Firebase Console > Project Settings > General
 - OpenAI: OpenAI Dashboard > API Keys
+- Anthropic: Anthropic Dashboard > API Keys
