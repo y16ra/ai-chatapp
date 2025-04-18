@@ -33,3 +33,6 @@ jspm_packages
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# SpecStory
+.specstory
