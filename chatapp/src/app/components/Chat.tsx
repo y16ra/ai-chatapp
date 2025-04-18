@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { GoPaperAirplane } from "react-icons/go";
 import { db } from "../../../firebase";
-import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp } from "firebase/firestore";
+import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, getDocs, deleteDoc } from "firebase/firestore";
 import { useAppContext } from "@/context/AppContext";
 import LoadingIcons from 'react-loading-icons'
 
@@ -140,6 +140,26 @@ const Chat = () => {
     });
   }
 
+  // メッセージ履歴をクリアする関数
+  const clearChatHistory = async () => {
+    if (!selectedRoom) return;
+    if (!window.confirm(`「${selectRoomName}」のチャット履歴をクリアしますか？この操作は元に戻せません。`)) return;
+    setIsLoading(true);
+    try {
+      const roomDocRef = doc(db, "rooms", selectedRoom);
+      const messageCollectionRef = collection(roomDocRef, "messages");
+      const snapshot = await getDocs(query(messageCollectionRef));
+      const deletePromises = snapshot.docs.map((d) => deleteDoc(d.ref));
+      await Promise.all(deletePromises);
+      setMessages([]);
+    } catch (error) {
+      console.error("Error clearing chat history:", error);
+      alert("チャット履歴のクリアに失敗しました。再度お試しください。");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="bg-gray-500 h-full flex flex-col p-4">
       <h1 className="text-2xl text-white font-semibold mb-4">{selectRoomName}</h1>
@@ -163,6 +183,15 @@ const Chat = () => {
               </option>
             ))}
           </select>
+        </div>
+        <div className="mb-2">
+          <button
+            onClick={clearChatHistory}
+            disabled={!selectedRoom || messages.length === 0}
+            className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            履歴クリア
+          </button>
         </div>
       </div>
       <div ref={scrollDiv} className="flex-grow overflow-y-auto mb-4">
