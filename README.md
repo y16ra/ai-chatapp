@@ -32,7 +32,6 @@ This is a chat application built with Next.js, TypeScript, and Firebase.
 ├── LICENSE               # License file
 ├── package.json          # Root package.json
 └── README.md            # This file
-
 ```
 
 ## Technologies Used
@@ -54,6 +53,44 @@ This is a chat application built with Next.js, TypeScript, and Firebase.
 - **React Hook Form (v7.54.2)**: Form handling library.
 - **React Icons (v5.5.0)**: Icon library.
 - **React Loading Icons (v1.1.0)**: Loading animations.
+
+## Data Structure
+
+### Firestore Data Model
+
+The application uses the following Firestore data structure:
+
+```
+rooms (Collection)
+└── {roomId} (Document)
+    ├── name: string       # Room name
+    ├── createdAt: timestamp # Creation date and time
+    ├── userId: string     # Creator's UID
+    └── messages (Sub-collection)
+        └── {messageId} (Document)
+            ├── text: string   # Message content
+            ├── sender: string # Sender type ("user" or "bot")
+            └── createdAt: timestamp # Message creation date and time
+```
+
+#### Collections and Documents
+
+1. **rooms Collection**
+   - Each document represents a chat room
+   - Contains basic room information and a messages sub-collection
+   - Documents are identified by auto-generated IDs
+
+2. **messages Sub-collection**
+   - Nested under each room document
+   - Each document represents a single message in the chat
+   - Messages are ordered by creation timestamp
+   - Supports both user messages and AI responses
+
+This structure allows for:
+- Individual chat rooms per user
+- Separate message history for each room
+- Efficient querying of messages within a specific room
+- Real-time updates using Firestore listeners
 
 ## Environment Setup
 
