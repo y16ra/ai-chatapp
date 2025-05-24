@@ -36,7 +36,8 @@ cp .env.example .env.local    # Copy environment template
 ```
 Firestore:
 rooms/{roomId} → { name, createdAt, userId }
-  └── messages/{messageId} → { text, sender, createdAt }
+  └── messages/{messageId} → { text, sender, createdAt, isRead, readAt }
+users/{userId}/favorites/{favoriteId} → { messageId, roomId, messageText, createdAt, timestamp }
 ```
 
 **AI Integration:**
@@ -81,6 +82,15 @@ Required in `chatapp/.env.local`:
 - **Solution**: `Chat.tsx:424-446`の再生成ボタン表示条件を修正
 - **Technical**: 最後のbotメッセージかどうかの判定ロジック(`isLastBotMessage`)を追加
 
+### Recent Work Completed (2025/5/24 - お気に入り機能実装)
+- **Feature**: AIメッセージお気に入り機能を実装
+  - 新機能：AIメッセージにハートボタンを追加し、お気に入り登録/削除が可能
+  - 追加ファイル：`src/app/components/Favorites.tsx` (お気に入り一覧表示コンポーネント)
+  - 変更ファイル：`src/app/components/Chat.tsx` (お気に入りボタンとAPI機能追加)
+  - 変更ファイル：`src/app/components/Sidebar.tsx` (お気に入り表示ボタン追加)
+  - データ構造：`users/{userId}/favorites/{favoriteId}` - メッセージID、ルームID、本文、タイムスタンプを保存
+  - 主な機能：リアルタイム同期、お気に入り一覧表示、削除機能、メッセージ短縮表示
+
 ### Current Features Analysis
 - ✅ マルチルーム対応
 - ✅ 複数AIモデル対応（OpenAI/Claude）
@@ -88,12 +98,13 @@ Required in `chatapp/.env.local`:
 - ✅ メッセージ再生成（修正済み）
 - ✅ 既読機能
 - ✅ 履歴クリア
+- ✅ お気に入り機能（AIメッセージの保存・一覧表示）
 
 ## Next Actions
 
 ### 優先度高：実装推奨機能
-1. **メッセージ検索機能** - 過去の会話を効率的に検索
-2. **コードブロック シンタックスハイライト** - コード表示の改善
+1. **コードブロック シンタックスハイライト** - コード表示の改善
+2. **メッセージ検索機能** - 過去の会話を効率的に検索
 3. **メッセージ編集機能** - 送信済みメッセージの修正
 4. **ダークモード切り替え** - UI/UX改善
 

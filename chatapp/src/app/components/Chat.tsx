@@ -6,7 +6,8 @@ import { FaCheck, FaCheckDouble, FaRedo, FaHeart, FaRegHeart } from "react-icons
 import { db } from "../../../firebase";
 import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, getDocs, deleteDoc, updateDoc } from "firebase/firestore";
 import { useAppContext } from "@/context/AppContext";
-import LoadingIcons from 'react-loading-icons'
+import LoadingIcons from 'react-loading-icons';
+import ModelComparison from './ModelComparison';
 
 type Message = {
   text: string;
@@ -27,6 +28,9 @@ const Chat = () => {
   const [streamingMessage, setStreamingMessage] = useState<string>("");
   const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showComparison, setShowComparison] = useState<boolean>(false);
+  const [comparisonResults, setComparisonResults] = useState<any[]>([]);
+  const [comparisonQuestion, setComparisonQuestion] = useState<string>("");
 
   const scrollDiv = useRef<HTMLDivElement>(null);
 
@@ -394,6 +398,103 @@ const Chat = () => {
     return () => unsubscribe();
   }, [userId]);
 
+  // モデル比較機能
+  const compareModels = async (question: string, models: string[]) => {
+    setComparisonQuestion(question);
+    setShowComparison(true);
+    
+    // 初期状態を設定
+    const initialResults = models.map(model => ({
+      model,
+      response: "",
+      status: 'loading' as const
+    }));
+    setComparisonResults(initialResults);
+
+    // 各モデルで並列実行
+    const promises = models.map(async (model, index) => {
+      try {
+        const apiEndpoint = model.startsWith('claude') ? '/api/claude' : '/api/openai';
+        
+        const response = await fetch(apiEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputMessage: question,
+            context: messages.map(message => ({
+              text: message.text,
+              sender: message.sender
+            })),
+            model: model
+          }),
+        });
+
+        if (!response.body) {
+          throw new Error('No response body');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullResponse = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                break;
+              }
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  fullResponse += parsed.content;
+                  // リアルタイム更新
+                  setComparisonResults(prev => prev.map((result, i) => 
+                    i === index 
+                      ? { ...result, response: fullResponse, status: 'loading' }
+                      : result
+                  ));
+                }
+              } catch (e) {
+                // Ignore JSON parsing errors
+              }
+            }
+          }
+        }
+
+        // 完了状態に更新
+        setComparisonResults(prev => prev.map((result, i) => 
+          i === index 
+            ? { ...result, response: fullResponse, status: 'completed' }
+            : result
+        ));
+
+      } catch (error) {
+        console.error(`Error with model ${model}:`, error);
+        setComparisonResults(prev => prev.map((result, i) => 
+          i === index 
+            ? { ...result, status: 'error', error: error instanceof Error ? error.message : 'Unknown error' }
+            : result
+        ));
+      }
+    });
+
+    await Promise.all(promises);
+  };
+
+  // 比較モードでの再生成
+  const handleComparisonRegenerate = (models: string[]) => {
+    compareModels(comparisonQuestion, models);
+  };
+
   // メッセージ履歴をクリアする関数
   const clearChatHistory = async () => {
     if (!selectedRoom) return;
@@ -415,21 +516,21 @@ const Chat = () => {
   };
 
   return (
-    <div className="bg-gray-500 h-full flex flex-col p-4">
-      <h1 className="text-2xl text-white font-semibold mb-4">{selectRoomName}</h1>
-      <div className="flex mb-4 space-x-4 flex-wrap"> {/* フレックスボックスを使用して横並びに */}
+    <div className="bg-gray-500 h-full flex flex-col p-2 sm:p-4">
+      <h1 className="text-xl sm:text-2xl text-white font-semibold mb-2 sm:mb-4 truncate">{selectRoomName}</h1>
+      <div className="flex mb-2 sm:mb-4 gap-2 sm:gap-4 flex-wrap"> {/* レスポンシブ対応のスペーシング */}
         <div className="flex items-center mb-2">
           <label className="text-white mr-2">AI Provider:</label>
           <span className="bg-blue-600 text-white px-2 py-1 rounded text-sm">
             {getCurrentAIProvider()}
           </span>
         </div>
-        <div className="mb-2">
-          <label className="text-white mr-2">Select AI Model:</label>
+        <div className="mb-2 flex-1 min-w-0">
+          <label className="text-white mr-2 text-sm sm:text-base">Select AI Model:</label>
           <select
             value={selectedModel}
             onChange={(e) => setSelectedModel(e.target.value)}
-            className="px-3 py-2 bg-white text-gray-700 appearance-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full sm:w-auto px-2 sm:px-3 py-2 bg-white text-gray-700 appearance-none focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm sm:text-base"
           >
             {modelOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -438,13 +539,25 @@ const Chat = () => {
             ))}
           </select>
         </div>
-        <div className="mb-2">
+        <div className="mb-2 flex gap-2">
           <button
             onClick={clearChatHistory}
             disabled={!selectedRoom || messages.length === 0}
-            className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-red-500 hover:bg-red-600 text-white px-2 sm:px-3 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             履歴クリア
+          </button>
+          <button
+            onClick={() => {
+              if (inputMessage.trim()) {
+                const selectedModels = ["gpt-4o", "gpt-4o-mini", "claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"];
+                compareModels(inputMessage, selectedModels);
+              }
+            }}
+            disabled={!inputMessage.trim() || isLoading}
+            className="bg-purple-500 hover:bg-purple-600 text-white px-2 sm:px-3 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+          >
+            モデル比較
           </button>
         </div>
       </div>
@@ -456,8 +569,8 @@ const Chat = () => {
                 <div
                   className={
                     message.sender === "user"
-                    ? "bg-blue-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap max-w-xs md:max-w-md lg:max-w-lg"
-                    : "bg-green-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap max-w-xs md:max-w-md lg:max-w-lg"
+                    ? "bg-blue-500 inline-block rounded px-3 sm:px-4 py-2 mb-2 whitespace-pre-wrap max-w-[280px] sm:max-w-xs md:max-w-md lg:max-w-lg"
+                    : "bg-green-500 inline-block rounded px-3 sm:px-4 py-2 mb-2 whitespace-pre-wrap max-w-[280px] sm:max-w-xs md:max-w-md lg:max-w-lg"
                       }
                 >
                 <p className="text-white">{message.text}</p>
@@ -527,7 +640,7 @@ const Chat = () => {
           ))}
           {streamingMessage && (
             <div className="text-left">
-              <div className="bg-green-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap max-w-xs md:max-w-md lg:max-w-lg">
+              <div className="bg-green-500 inline-block rounded px-3 sm:px-4 py-2 mb-2 whitespace-pre-wrap max-w-[280px] sm:max-w-xs md:max-w-md lg:max-w-lg">
                 <p className="text-white">{streamingMessage}</p>
                 <span className="text-green-200 animate-pulse">▋</span>
                 <div className="text-xs mt-1 flex items-center justify-between text-green-200">
@@ -546,10 +659,10 @@ const Chat = () => {
           )}
           {isLoading && !streamingMessage && <LoadingIcons.TailSpin />}
       </div>
-      <div className="flex-shrink-0 relative">
+      <div className="flex-shrink-0 relative mx-1 sm:mx-0">
           <textarea
             ref={textareaRef}
-            className="w-full p-2 pr-10 rounded border-2 focus:outline-none resize-none overflow-hidden min-h-[40px]"
+            className="w-full p-2 sm:p-3 pr-12 sm:pr-14 rounded border-2 focus:outline-none resize-none overflow-hidden min-h-[40px] text-sm sm:text-base"
             placeholder="Type a message..."
             value={inputMessage}
             onCompositionStart={startComposition}
@@ -583,13 +696,21 @@ const Chat = () => {
             rows={1}
           />
           <button
-            className="absolute right-2 top-2 rounded"
+            className="absolute right-2 sm:right-3 top-2 sm:top-3 rounded p-1 hover:bg-gray-100"
             onClick={handleSendMessage}
           >
-            <GoPaperAirplane />
+            <GoPaperAirplane className="text-sm sm:text-base" />
           </button>
-          <span className="absolute right-2 bottom-1 text-xs text-gray-400 italic">⌘+Enter to send</span>
+          <span className="absolute right-2 sm:right-3 bottom-1 text-xs text-gray-400 italic">⌘+Enter to send</span>
         </div>
+      
+      <ModelComparison
+        isOpen={showComparison}
+        onClose={() => setShowComparison(false)}
+        question={comparisonQuestion}
+        results={comparisonResults}
+        onRegenerate={handleComparisonRegenerate}
+      />
     </div>
 
   );
