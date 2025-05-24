@@ -21,6 +21,7 @@ const Chat = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
   const [selectedAgent, setSelectedAgent] = useState<string>("none");
+  const [streamingMessage, setStreamingMessage] = useState<string>("");
 
   const scrollDiv = useRef<HTMLDivElement>(null);
 
@@ -79,7 +80,7 @@ const Chat = () => {
         behavior: "smooth",
       });
     }
-  }, [messages]);
+  }, [messages, streamingMessage]);
 
   const [isComposing, setComposition] = useState(false);
   const startComposition = () => setComposition(true);
@@ -106,38 +107,87 @@ const Chat = () => {
     const messageCollectionRef = collection(roomDocRef, "messages");
     await addDoc(messageCollectionRef, messageData);
 
+    const currentInput = inputMessage;
     setInputMessage("");
     setIsLoading(true);
+    setStreamingMessage("");
 
     // Determine which API endpoint to use based on the selected model
     const apiEndpoint = isClaudeModel(selectedModel) ? '/api/claude' : '/api/openai';
 
-    // Reply from the bot
-    const response = await fetch(apiEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputMessage,
-        context: messages.map(message => ({
-          text: message.text,
-          sender: message.sender
-        })),
-        model: selectedModel
-      }),
-    });
+    try {
+      // Start streaming response
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputMessage: currentInput,
+          context: messages.map(message => ({
+            text: message.text,
+            sender: message.sender
+          })),
+          model: selectedModel
+        }),
+      });
 
-    setIsLoading(false);
+      if (!response.body) {
+        throw new Error('No response body');
+      }
 
-    const data = await response.json();
-    const botResponse = data.botResponse;
-    console.log(botResponse);
-    await addDoc(messageCollectionRef, {
-      text: botResponse,
-      sender: "bot",
-      createdAt: serverTimestamp(),
-    });
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              break;
+            }
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                fullResponse += parsed.content;
+                setStreamingMessage(fullResponse);
+              }
+            } catch (e) {
+              // Ignore JSON parsing errors
+            }
+          }
+        }
+      }
+
+      setIsLoading(false);
+      setStreamingMessage("");
+
+      // Save complete response to Firestore
+      await addDoc(messageCollectionRef, {
+        text: fullResponse,
+        sender: "bot",
+        createdAt: serverTimestamp(),
+      });
+
+    } catch (error) {
+      console.error('Streaming error:', error);
+      setIsLoading(false);
+      setStreamingMessage("");
+      
+      // Fallback to regular message
+      await addDoc(messageCollectionRef, {
+        text: "エラーが発生しました。もう一度お試しください。",
+        sender: "bot",
+        createdAt: serverTimestamp(),
+      });
+    }
   }
 
   // メッセージ履歴をクリアする関数
@@ -210,7 +260,15 @@ const Chat = () => {
               </div>
             </div>
           ))}
-          {isLoading && <LoadingIcons.TailSpin />}
+          {streamingMessage && (
+            <div className="text-left">
+              <div className="bg-green-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap">
+                <p className="text-white">{streamingMessage}</p>
+                <span className="text-green-200 animate-pulse">▋</span>
+              </div>
+            </div>
+          )}
+          {isLoading && !streamingMessage && <LoadingIcons.TailSpin />}
       </div>
       <div className="flex-shrink-0 relative">
           <textarea 

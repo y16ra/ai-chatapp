@@ -24,10 +24,9 @@ export async function POST(req: NextRequest) {
   if (!SUPPORTED_MODELS.includes(model)) {
     return NextResponse.json({ error: 'Unsupported model' }, { status: 400 });
   }
-  let botResponse = null;
 
   try {
-    const gpt3Response = await openai.chat.completions.create({
+    const stream = await openai.chat.completions.create({
       messages: [
         ...context.map((msg: { text: string, sender: string }) => ({
           role: msg.sender === "user" ? "user" : "assistant",
@@ -35,12 +34,36 @@ export async function POST(req: NextRequest) {
         })),
         { role: "user", content: inputMessage }
       ],
-      model: model || "gpt-4o-mini", // Default model
-
+      model: model || "gpt-4o-mini",
+      stream: true,
     });
-    botResponse = gpt3Response.choices[0].message.content;
-    console.log(botResponse);
-    return NextResponse.json({ botResponse });
+
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+              const data = `data: ${JSON.stringify({ content })}\n\n`;
+              controller.enqueue(encoder.encode(data));
+            }
+          }
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Error generating response from OpenAI' }, { status: 500 });
   }

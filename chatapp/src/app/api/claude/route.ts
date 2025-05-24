@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const response = await anthropic.messages.create({
+    const stream = await anthropic.messages.create({
       model: model || 'claude-3-sonnet-20240229',
       max_tokens: 1000,
       messages: [
@@ -28,21 +28,37 @@ export async function POST(req: NextRequest) {
           content: msg.text
         })),
         { role: "user", content: inputMessage }
-      ]
+      ],
+      stream: true,
     });
 
-    let botResponse = '';
-    if (response.content && response.content.length > 0) {
-      const contentBlock = response.content[0];
-      if (contentBlock.type === 'text') {
-        botResponse = contentBlock.text;
-      } else if (contentBlock.type === 'tool_use') {
-        botResponse = JSON.stringify(contentBlock);
-      }
-    }
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+              const content = chunk.delta.text;
+              if (content) {
+                const data = `data: ${JSON.stringify({ content })}\n\n`;
+                controller.enqueue(encoder.encode(data));
+              }
+            }
+          }
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        }
+      },
+    });
 
-    return NextResponse.json({
-      botResponse: botResponse
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     });
 
   } catch (error: any) {
