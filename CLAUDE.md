@@ -36,7 +36,8 @@ cp .env.example .env.local    # Copy environment template
 ```
 Firestore:
 rooms/{roomId} → { name, createdAt, userId }
-  └── messages/{messageId} → { text, sender, createdAt }
+  └── messages/{messageId} → { text, sender, createdAt, isRead, readAt }
+users/{userId}/favorites/{favoriteId} → { messageId, roomId, messageText, createdAt, timestamp }
 ```
 
 **AI Integration:**
@@ -81,6 +82,29 @@ Required in `chatapp/.env.local`:
 - **Solution**: `Chat.tsx:424-446`の再生成ボタン表示条件を修正
 - **Technical**: 最後のbotメッセージかどうかの判定ロジック(`isLastBotMessage`)を追加
 
+### Recent Work Completed (2024/12/30 - レスポンシブ&モデル比較&PRレビュー対応)
+- **Feature**: レスポンシブデザイン改善とAIモデル比較機能を実装
+  - レスポンシブデザイン：固定幅→完全レスポンシブ、モバイル用ハンバーガーメニュー実装
+  - AIモデル比較機能：4つのモデル(GPT-4o/mini, Claude-3-5-Sonnet/Haiku)で並列実行
+  - チャットヘッダー固定表示：スクロール時もコントロール部分が常に見える
+  - 新規ファイル：`src/app/components/ModelComparison.tsx`, `src/constants/models.ts`
+  - 変更ファイル：`src/app/page.tsx`, `src/app/components/Chat.tsx`, `src/app/components/Sidebar.tsx`
+
+- **PRレビュー対応**: コードレビューフィードバックに基づく品質向上
+  - `bg-custom-blue`未定義クラスを`bg-blue-900`に修正
+  - モデル定義を一元化（`constants/models.ts`）してDRY原則に準拠
+  - TypeScript型安全性向上：`ComparisonResult`型を明示的に使用
+  - アクセシビリティ改善：ハンバーガーメニューに`aria-label`、`aria-expanded`属性追加
+  - セマンティックHTML：サイドバーを`<nav>`要素に変更
+
+- **Feature**: AIメッセージお気に入り機能を実装
+  - 新機能：AIメッセージにハートボタンを追加し、お気に入り登録/削除が可能
+  - 追加ファイル：`src/app/components/Favorites.tsx` (お気に入り一覧表示コンポーネント)
+  - 変更ファイル：`src/app/components/Chat.tsx` (お気に入りボタンとAPI機能追加)
+  - 変更ファイル：`src/app/components/Sidebar.tsx` (お気に入り表示ボタン追加)
+  - データ構造：`users/{userId}/favorites/{favoriteId}` - メッセージID、ルームID、本文、タイムスタンプを保存
+  - 主な機能：リアルタイム同期、お気に入り一覧表示、削除機能、メッセージ短縮表示
+
 ### Current Features Analysis
 - ✅ マルチルーム対応
 - ✅ 複数AIモデル対応（OpenAI/Claude）
@@ -88,12 +112,16 @@ Required in `chatapp/.env.local`:
 - ✅ メッセージ再生成（修正済み）
 - ✅ 既読機能
 - ✅ 履歴クリア
+- ✅ お気に入り機能（AIメッセージの保存・一覧表示）
+- ✅ レスポンシブデザイン（モバイル対応完了）
+- ✅ AIモデル比較機能（4モデル並列実行）
+- ✅ 固定ヘッダー/フッター（スクロール時の操作性向上）
 
 ## Next Actions
 
 ### 優先度高：実装推奨機能
-1. **メッセージ検索機能** - 過去の会話を効率的に検索
-2. **コードブロック シンタックスハイライト** - コード表示の改善
+1. **コードブロック シンタックスハイライト** - コード表示の改善
+2. **メッセージ検索機能** - 過去の会話を効率的に検索
 3. **メッセージ編集機能** - 送信済みメッセージの修正
 4. **ダークモード切り替え** - UI/UX改善
 
@@ -107,3 +135,6 @@ Required in `chatapp/.env.local`:
 - 検索機能実装時はFirestore full-text searchの制限を考慮
 - シンタックスハイライトは`react-syntax-highlighter`ライブラリの導入を検討
 - 大量メッセージでのパフォーマンス最適化が必要
+- モデル比較機能のAPI使用量監視とコスト管理
+- アクセシビリティ対応の継続的改善
+- TypeScript型安全性の向上（`any`型の削除）

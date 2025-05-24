@@ -12,7 +12,11 @@ type Room = {
   createdAt: Timestamp;
 };
 
-const Sidebar = () => {
+type SidebarProps = {
+  onClose?: () => void;
+};
+
+const Sidebar = ({ onClose }: SidebarProps) => {
 
   const { user, userId, setSelectedRoom, setSelectRoomName, selectedRoom } = useAppContext();
 
@@ -46,6 +50,8 @@ const Sidebar = () => {
     console.log(roomId);
     setSelectedRoom(roomId);
     setSelectRoomName(roomName);
+    // モバイルでルーム選択時にサイドバーを閉じる
+    onClose?.();
   };
 
   // Add a new room
@@ -94,7 +100,7 @@ const Sidebar = () => {
   }
 
   return (
-    <div className="bg-custom-blue h-full overflow-y-auto px-5 flex flex-col">
+    <div className="bg-blue-900 h-full overflow-y-auto px-5 flex flex-col">
       <div className="flex-grow">
         <div
           onClick={addRoom}
