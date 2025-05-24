@@ -1,15 +1,30 @@
-# AI Chat App
+# AI Chat Application
 
-This is a chat application built with Next.js, TypeScript, and Firebase.
+A real-time chat application supporting multiple AI models from OpenAI and Anthropic. Features responsive design, model comparison capabilities, and comprehensive chat management.
 
-## Features
+## 🚀 Quick Start
 
-- Create a chat application using AI.
-- Utilize OpenAI API and Anthropic API.
-- Allow users to select and use different AI models.
-- Implement user registration and login functionality.
-- Save and display chat history.
-- Create chat rooms and save/display chats per room.
+```bash
+cd chatapp
+npm install
+cp .env.example .env.local
+# Configure your environment variables
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to start chatting!
+
+## ✨ Key Features
+
+- **Multiple AI Models**: GPT-4o, GPT-4o-mini, o1, Claude-3-5-Sonnet, Claude-3-5-Haiku
+- **AI Model Comparison**: Compare responses from multiple models simultaneously
+- **Real-time Chat**: Instant messaging with streaming AI responses
+- **Multi-room Support**: Create and manage multiple chat rooms
+- **Favorites System**: Save and organize favorite AI messages
+- **Responsive Design**: Optimized for desktop, tablet, and mobile
+- **User Authentication**: Secure login with Firebase Auth
+
+> 📖 **For detailed usage instructions and feature documentation, see [chatapp/README.md](./chatapp/README.md)**
 
 ## Project Structure
 
@@ -34,92 +49,100 @@ This is a chat application built with Next.js, TypeScript, and Firebase.
 └── README.md            # This file
 ```
 
-## Technologies Used
+## 🛠️ Tech Stack
 
-### Frontend
-- **Next.js (v14.2.25)**: React-based full-stack framework.
-- **React (v18)**: UI library.
-- **TypeScript (v5)**: Language for type-safe development.
-- **Tailwind CSS (v3.4.17)**: Utility-first CSS framework.
+| Category | Technology | Version | Purpose |
+|----------|------------|---------|---------|
+| **Framework** | Next.js | 14.2.25 | React-based full-stack framework |
+| **Language** | TypeScript | 5.x | Type-safe development |
+| **Styling** | Tailwind CSS | 3.4.17 | Utility-first CSS framework |
+| **Database** | Firebase Firestore | 11.4.0 | Real-time NoSQL database |
+| **Authentication** | Firebase Auth | 11.4.0 | User authentication & management |
+| **AI APIs** | OpenAI API | 4.87.4 | GPT models integration |
+| **AI APIs** | Anthropic API | 0.39.0 | Claude models integration |
+| **State Management** | React Hooks | - | useState, useContext, useEffect |
+| **Icons** | React Icons | 5.5.0 | UI icon library |
 
-### Backend/Infrastructure
-- **Firebase (v11.4.0)**: Google's backend service.
-- **OpenAI API (v4.87.4)**: Used for AI functionalities.
-- **Anthropic API (v0.39.0)**: Used for AI functionalities.
-
-### Development Tools
-- **ESLint (v8)**: Maintains code quality and style.
-- **PostCSS (v8)**: CSS transformation and optimization.
-- **React Hook Form (v7.54.2)**: Form handling library.
-- **React Icons (v5.5.0)**: Icon library.
-- **React Loading Icons (v1.1.0)**: Loading animations.
-
-## Data Structure
+## 📊 Database Schema
 
 ### Firestore Data Model
 
-The application uses the following Firestore data structure:
-
 ```
-rooms (Collection)
-└── {roomId} (Document)
-    ├── name: string       # Room name
-    ├── createdAt: timestamp # Creation date and time
-    ├── userId: string     # Creator's UID
-    └── messages (Sub-collection)
-        └── {messageId} (Document)
-            ├── text: string   # Message content
-            ├── sender: string # Sender type ("user" or "bot")
-            └── createdAt: timestamp # Message creation date and time
+Firestore
+├── rooms/{roomId}
+│   ├── name: string
+│   ├── createdAt: timestamp
+│   ├── userId: string
+│   └── messages/{messageId}
+│       ├── text: string
+│       ├── sender: 'user' | 'bot'
+│       ├── createdAt: timestamp
+│       ├── isRead: boolean
+│       └── readAt: timestamp
+└── users/{userId}/favorites/{favoriteId}
+    ├── messageId: string
+    ├── roomId: string
+    ├── messageText: string
+    ├── createdAt: timestamp
+    └── timestamp: timestamp
 ```
 
-#### Collections and Documents
+### Key Features Supported:
+- ✅ **Multi-room chat** with user isolation
+- ✅ **Real-time messaging** with Firestore listeners
+- ✅ **Read status tracking** for message management
+- ✅ **Favorites system** for important messages
+- ✅ **User-specific data** with proper security rules
 
-1. **rooms Collection**
-   - Each document represents a chat room
-   - Contains basic room information and a messages sub-collection
-   - Documents are identified by auto-generated IDs
+## ⚙️ Development Setup
 
-2. **messages Sub-collection**
-   - Nested under each room document
-   - Each document represents a single message in the chat
-   - Messages are ordered by creation timestamp
-   - Supports both user messages and AI responses
+### Prerequisites
+- Node.js 18+ 
+- Firebase project with Firestore and Auth enabled
+- OpenAI API key
+- Anthropic API key
 
-This structure allows for:
-- Individual chat rooms per user
-- Separate message history for each room
-- Efficient querying of messages within a specific room
-- Real-time updates using Firestore listeners
+### Environment Configuration
 
-## Environment Setup
+Create `.env.local` in the `chatapp` directory:
 
-The application requires several environment variables to be set up. These variables are stored in `.env.local` file, which is not included in the repository for security reasons.
+```env
+# Firebase
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 
-1. Copy the example environment file:
+# AI APIs
+OPENAI_API_KEY=your_openai_api_key
+ANTHROPIC_API_KEY=your_anthropic_api_key
+
+# Features
+NEXT_PUBLIC_REGISTRATION_ENABLED=true
+```
+
+### Available Scripts
 ```bash
-cd chatapp
-cp .env.example .env.local
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
 ```
 
-2. Update the following variables in `.env.local`:
+## 📄 License
 
-### Firebase Configuration
-- `NEXT_PUBLIC_FIREBASE_API_KEY`: Your Firebase API key
-- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`: Your Firebase auth domain
-- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`: Your Firebase project ID
-- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`: Your Firebase storage bucket
-- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`: Your Firebase messaging sender ID
-- `NEXT_PUBLIC_FIREBASE_APP_ID`: Your Firebase app ID
-- `NEXT_PUBLIC_REGISTRATION_ENABLED`: Set to `true` to enable user registration
+MIT License - see [LICENSE](LICENSE) file for details.
 
-### OpenAI Configuration
-- `OPENAI_API_KEY`: Your OpenAI API key
+## 🤝 Contributing
 
-### Anthropic Configuration
-- `ANTHROPIC_API_KEY`: Your Anthropic API key
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-You can obtain these values from:
-- Firebase: Firebase Console > Project Settings > General
-- OpenAI: OpenAI Dashboard > API Keys
-- Anthropic: Anthropic Dashboard > API Keys
+---
+
+**Built with ❤️ using Next.js and Firebase**
