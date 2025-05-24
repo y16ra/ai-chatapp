@@ -2,8 +2,9 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { GoPaperAirplane } from "react-icons/go";
+import { FaCheck, FaCheckDouble } from "react-icons/fa";
 import { db } from "../../../firebase";
-import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, getDocs, deleteDoc } from "firebase/firestore";
+import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, getDocs, deleteDoc, updateDoc } from "firebase/firestore";
 import { useAppContext } from "@/context/AppContext";
 import LoadingIcons from 'react-loading-icons'
 
@@ -11,6 +12,8 @@ type Message = {
   text: string;
   sender: string;
   createdAt: Timestamp;
+  isRead?: boolean;
+  readAt?: Timestamp;
 };
 
 const Chat = () => {
@@ -24,6 +27,30 @@ const Chat = () => {
   const [streamingMessage, setStreamingMessage] = useState<string>("");
 
   const scrollDiv = useRef<HTMLDivElement>(null);
+
+  // タイムスタンプをフォーマットする関数
+  const formatTimestamp = (timestamp: Timestamp) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate();
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    
+    if (diffInHours < 24) {
+      // 24時間以内は時刻のみ表示
+      return date.toLocaleTimeString('ja-JP', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } else {
+      // 24時間以上前は日付と時刻を表示
+      return date.toLocaleString('ja-JP', { 
+        month: 'short', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    }
+  };
 
   // モデルの選択肢を配列で定義
   const modelOptions = [
@@ -59,10 +86,30 @@ const Chat = () => {
 
         const q = query(messageCollectionRef, orderBy("createdAt"));
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-          const messages = snapshot.docs.map((doc) => doc.data() as Message);
-          console.log(messages);
-          setMessages(messages);
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+          const messagesWithIds = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+          } as Message & { id: string }));
+          console.log(messagesWithIds);
+          setMessages(messagesWithIds);
+          
+          // ボットのメッセージで未読のものを既読にする
+          const unreadBotMessages = messagesWithIds.filter(
+            msg => msg.sender === "bot" && !msg.isRead
+          );
+          
+          for (const message of unreadBotMessages) {
+            try {
+              const messageRef = doc(db, "rooms", selectedRoom, "messages", message.id);
+              await updateDoc(messageRef, {
+                isRead: true,
+                readAt: serverTimestamp()
+              });
+            } catch (error) {
+              console.error("Error updating read status:", error);
+            }
+          }
         });
         return () => {
           unsubscribe();
@@ -101,6 +148,8 @@ const Chat = () => {
       text: inputMessage,
       sender: "user",
       createdAt: serverTimestamp(),
+      isRead: true, // ユーザー自身のメッセージは既読扱い
+      readAt: serverTimestamp(),
     };
     // Store message to Firestore
     const roomDocRef = doc(db, "rooms", selectedRoom!);
@@ -174,6 +223,7 @@ const Chat = () => {
         text: fullResponse,
         sender: "bot",
         createdAt: serverTimestamp(),
+        isRead: false, // ボットのメッセージは未読で作成
       });
 
     } catch (error) {
@@ -186,6 +236,7 @@ const Chat = () => {
         text: "エラーが発生しました。もう一度お試しください。",
         sender: "bot",
         createdAt: serverTimestamp(),
+        isRead: false,
       });
     }
   }
@@ -252,19 +303,39 @@ const Chat = () => {
                 <div
                   className={
                     message.sender === "user"
-                    ? "bg-blue-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap"
-                    : "bg-green-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap"
+                    ? "bg-blue-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap max-w-xs md:max-w-md lg:max-w-lg"
+                    : "bg-green-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap max-w-xs md:max-w-md lg:max-w-lg"
                       }
                 >
                 <p className="text-white">{message.text}</p>
+                <div className={`text-xs mt-1 flex items-center justify-between ${
+                  message.sender === "user" ? "text-blue-200" : "text-green-200"
+                }`}>
+                  <span>{formatTimestamp(message.createdAt)}</span>
+                  {message.sender === "user" && (
+                    <span className="ml-2">
+                      {message.isRead ? (
+                        <FaCheckDouble className="inline" title="既読" />
+                      ) : (
+                        <FaCheck className="inline" title="送信済み" />
+                      )}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
           {streamingMessage && (
             <div className="text-left">
-              <div className="bg-green-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap">
+              <div className="bg-green-500 inline-block rounded px-4 py-2 mb-2 whitespace-pre-wrap max-w-xs md:max-w-md lg:max-w-lg">
                 <p className="text-white">{streamingMessage}</p>
                 <span className="text-green-200 animate-pulse">▋</span>
+                <div className="text-xs mt-1 text-green-200">
+                  {new Date().toLocaleTimeString('ja-JP', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </div>
               </div>
             </div>
           )}
