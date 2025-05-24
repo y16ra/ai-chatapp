@@ -64,3 +64,46 @@ Required in `chatapp/.env.local`:
 - `src/app/auth/` - Login/register pages
 - `src/app/components/` - Main UI components
 - `src/context/` - React context providers
+
+## Current Status
+
+### Recent Work Completed (2025/5/24)
+- **Feature**: AIレスポンスの再生成機能を追加し、メッセージ表示を改善 (commit: 4f9af6b)
+  - 新機能：AIメッセージの再生成ボタンを実装
+  - 変更ファイル：`chatapp/src/app/components/Chat.tsx` (+162 lines)
+  - 主な機能：最後のAIメッセージに再生成ボタンを表示、ストリーミング対応
+- **Feature**: チャットメッセージに既読機能を追加し、タイムスタンプのフォーマットを改善 (commit: 7c37557)
+- **Feature**: ストリーミング応答機能を追加し、チャットコンポーネントを更新 (commit: b083ecc)
+- **Feature**: CLAUDE.mdを追加し、開発コマンドやアーキテクチャ概要を記載 (commit: 1ea2201)
+
+### Today's Bug Fix Session
+- **Issue**: 最後のAIメッセージ以外の再生成ボタンを押すと、生成されたメッセージに再生成ボタンが表示されない
+- **Solution**: `Chat.tsx:424-446`の再生成ボタン表示条件を修正
+- **Technical**: 最後のbotメッセージかどうかの判定ロジック(`isLastBotMessage`)を追加
+
+### Current Features Analysis
+- ✅ マルチルーム対応
+- ✅ 複数AIモデル対応（OpenAI/Claude）
+- ✅ ストリーミング応答
+- ✅ メッセージ再生成（修正済み）
+- ✅ 既読機能
+- ✅ 履歴クリア
+
+## Next Actions
+
+### 優先度高：実装推奨機能
+1. **メッセージ検索機能** - 過去の会話を効率的に検索
+2. **コードブロック シンタックスハイライト** - コード表示の改善
+3. **メッセージ編集機能** - 送信済みメッセージの修正
+4. **ダークモード切り替え** - UI/UX改善
+
+### 中長期的な機能拡張
+- ファイルアップロード対応
+- 画像解析機能
+- 会話エクスポート機能
+- システムプロンプト設定
+
+### 技術的考慮事項
+- 検索機能実装時はFirestore full-text searchの制限を考慮
+- シンタックスハイライトは`react-syntax-highlighter`ライブラリの導入を検討
+- 大量メッセージでのパフォーマンス最適化が必要
