@@ -1,9 +1,10 @@
 import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, orderBy, query, Timestamp, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { BiLogOut } from "react-icons/bi";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaHeart } from "react-icons/fa";
 import { auth, db } from "../../../firebase";
 import { useAppContext } from "@/context/AppContext";
+import Favorites from "./Favorites";
 
 type Room = {
   id: string;
@@ -16,6 +17,7 @@ const Sidebar = () => {
   const { user, userId, setSelectedRoom, setSelectRoomName, selectedRoom } = useAppContext();
 
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [showFavorites, setShowFavorites] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
@@ -100,6 +102,12 @@ const Sidebar = () => {
           <span className="text-white p-4 text-2xl">+</span>
           <h1 className="text-white text-xl font-semibold p-4">New Chat</h1>
         </div>
+        <div
+          onClick={() => setShowFavorites(true)}
+          className="cursor-pointer flex justify-evenly items-center border mt-2 rounded-md hover:bg-blue-800 duration-150">
+          <FaHeart className="text-red-400 p-1 text-2xl" />
+          <h1 className="text-white text-xl font-semibold p-4">お気に入り</h1>
+        </div>
         <ul>
         {rooms.map((room) => (
           <li
@@ -136,6 +144,7 @@ const Sidebar = () => {
         <BiLogOut />
         <span>logout</span>
       </div>
+      <Favorites isOpen={showFavorites} onClose={() => setShowFavorites(false)} />
     </div>
   );
 }

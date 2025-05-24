@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { GoPaperAirplane } from "react-icons/go";
-import { FaCheck, FaCheckDouble, FaRedo } from "react-icons/fa";
+import { FaCheck, FaCheckDouble, FaRedo, FaHeart, FaRegHeart } from "react-icons/fa";
 import { db } from "../../../firebase";
 import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, getDocs, deleteDoc, updateDoc } from "firebase/firestore";
 import { useAppContext } from "@/context/AppContext";
@@ -18,7 +18,7 @@ type Message = {
 
 const Chat = () => {
 
-  const { selectedRoom, selectRoomName } = useAppContext();
+  const { selectedRoom, selectRoomName, userId } = useAppContext();
   const [inputMessage, setInputMessage] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -26,6 +26,7 @@ const Chat = () => {
   const [selectedAgent, setSelectedAgent] = useState<string>("none");
   const [streamingMessage, setStreamingMessage] = useState<string>("");
   const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const scrollDiv = useRef<HTMLDivElement>(null);
 
@@ -35,20 +36,20 @@ const Chat = () => {
     const date = timestamp.toDate();
     const now = new Date();
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 24) {
       // 24時間以内は時刻のみ表示
-      return date.toLocaleTimeString('ja-JP', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      return date.toLocaleTimeString('ja-JP', {
+        hour: '2-digit',
+        minute: '2-digit'
       });
     } else {
       // 24時間以上前は日付と時刻を表示
-      return date.toLocaleString('ja-JP', { 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      return date.toLocaleString('ja-JP', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     }
   };
@@ -94,12 +95,12 @@ const Chat = () => {
           } as Message & { id: string }));
           console.log(messagesWithIds);
           setMessages(messagesWithIds);
-          
+
           // ボットのメッセージで未読のものを既読にする
           const unreadBotMessages = messagesWithIds.filter(
             msg => msg.sender === "bot" && !msg.isRead
           );
-          
+
           for (const message of unreadBotMessages) {
             try {
               const messageRef = doc(db, "rooms", selectedRoom, "messages", message.id);
@@ -231,7 +232,7 @@ const Chat = () => {
       console.error('Streaming error:', error);
       setIsLoading(false);
       setStreamingMessage("");
-      
+
       // Fallback to regular message
       await addDoc(messageCollectionRef, {
         text: "エラーが発生しました。もう一度お試しください。",
@@ -245,7 +246,7 @@ const Chat = () => {
   // AIレスポンスを再生成する関数
   const regenerateResponse = async (messageIndex: number) => {
     if (!selectedRoom || isLoading) return;
-    
+
     // 再生成対象のメッセージを取得
     const targetMessage = messages[messageIndex];
     if (!targetMessage || targetMessage.sender !== "bot") {
@@ -273,10 +274,10 @@ const Chat = () => {
 
     const roomDocRef = doc(db, "rooms", selectedRoom);
     const messageCollectionRef = collection(roomDocRef, "messages");
-    
+
     // 再生成時のコンテキストを構築（対象メッセージより前のメッセージのみ）
     const contextMessages = messages.slice(0, messageIndex);
-    
+
     // 現在選択されているモデルでAPIエンドポイントを決定
     const apiEndpoint = isClaudeModel(selectedModel) ? '/api/claude' : '/api/openai';
 
@@ -348,6 +349,50 @@ const Chat = () => {
       setStreamingMessage("");
     }
   };
+
+  // お気に入り機能
+  const toggleFavorite = async (messageId: string, messageText: string) => {
+    if (!userId || !selectedRoom) return;
+    
+    try {
+      const favoriteRef = doc(db, "users", userId, "favorites", messageId);
+      
+      if (favorites.has(messageId)) {
+        // お気に入りから削除
+        await deleteDoc(favoriteRef);
+        setFavorites(prev => {
+          const newFavorites = new Set(prev);
+          newFavorites.delete(messageId);
+          return newFavorites;
+        });
+      } else {
+        // お気に入りに追加
+        await addDoc(collection(db, "users", userId, "favorites"), {
+          messageId,
+          roomId: selectedRoom,
+          messageText,
+          createdAt: serverTimestamp(),
+          timestamp: serverTimestamp()
+        });
+        setFavorites(prev => new Set(prev).add(messageId));
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
+  };
+
+  // お気に入り状態を読み込む
+  useEffect(() => {
+    if (!userId) return;
+    
+    const favoritesRef = collection(db, "users", userId, "favorites");
+    const unsubscribe = onSnapshot(favoritesRef, (snapshot) => {
+      const favoriteIds = new Set(snapshot.docs.map(doc => doc.data().messageId));
+      setFavorites(favoriteIds);
+    });
+    
+    return () => unsubscribe();
+  }, [userId]);
 
   // メッセージ履歴をクリアする関数
   const clearChatHistory = async () => {
@@ -421,6 +466,19 @@ const Chat = () => {
                 }`}>
                   <span>{formatTimestamp(message.createdAt)}</span>
                   <div className="flex items-center gap-2">
+                    {message.sender === "bot" && (
+                      <button
+                        onClick={() => toggleFavorite((message as any).id, message.text)}
+                        className="hover:bg-green-600 p-1 rounded transition-colors"
+                        title={favorites.has((message as any).id) ? "お気に入りから削除" : "お気に入りに追加"}
+                      >
+                        {favorites.has((message as any).id) ? (
+                          <FaHeart className="text-xs text-red-400" />
+                        ) : (
+                          <FaRegHeart className="text-xs" />
+                        )}
+                      </button>
+                    )}
                     {message.sender === "bot" && (() => {
                       // 最後のbotメッセージかどうかをチェック
                       let isLastBotMessage = true;
@@ -430,7 +488,7 @@ const Chat = () => {
                           break;
                         }
                       }
-                      
+
                       // 直前にユーザーメッセージがあるかチェック
                       let hasUserMessageBefore = false;
                       for (let i = index - 1; i >= 0; i--) {
@@ -441,7 +499,7 @@ const Chat = () => {
                           break; // 連続するbotメッセージの場合は停止
                         }
                       }
-                      
+
                       return isLastBotMessage && hasUserMessageBefore;
                     })() && (
                       <button
@@ -474,9 +532,9 @@ const Chat = () => {
                 <span className="text-green-200 animate-pulse">▋</span>
                 <div className="text-xs mt-1 flex items-center justify-between text-green-200">
                   <span>
-                    {new Date().toLocaleTimeString('ja-JP', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
+                    {new Date().toLocaleTimeString('ja-JP', {
+                      hour: '2-digit',
+                      minute: '2-digit'
                     })}
                   </span>
                   {regeneratingMessageId && (
@@ -489,16 +547,16 @@ const Chat = () => {
           {isLoading && !streamingMessage && <LoadingIcons.TailSpin />}
       </div>
       <div className="flex-shrink-0 relative">
-          <textarea 
+          <textarea
             ref={textareaRef}
-            className="w-full p-2 pr-10 rounded border-2 focus:outline-none resize-none overflow-hidden min-h-[40px]" 
+            className="w-full p-2 pr-10 rounded border-2 focus:outline-none resize-none overflow-hidden min-h-[40px]"
             placeholder="Type a message..."
             value={inputMessage}
             onCompositionStart={startComposition}
             onCompositionEnd={endComposition}
             onChange={(e) => {
               setInputMessage(e.target.value);
-              
+
               // Auto-resize textarea
               if (textareaRef.current) {
                 textareaRef.current.style.height = 'auto';
@@ -524,7 +582,7 @@ const Chat = () => {
             }}
             rows={1}
           />
-          <button 
+          <button
             className="absolute right-2 top-2 rounded"
             onClick={handleSendMessage}
           >
