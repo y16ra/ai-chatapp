@@ -516,9 +516,11 @@ const Chat = () => {
   };
 
   return (
-    <div className="bg-gray-500 h-full flex flex-col p-2 sm:p-4">
-      <h1 className="text-xl sm:text-2xl text-white font-semibold mb-2 sm:mb-4 truncate">{selectRoomName}</h1>
-      <div className="flex mb-2 sm:mb-4 gap-2 sm:gap-4 flex-wrap"> {/* レスポンシブ対応のスペーシング */}
+    <div className="bg-gray-500 h-full flex flex-col">
+      {/* 固定ヘッダー */}
+      <div className="flex-none bg-gray-500 p-2 sm:p-4 border-b border-gray-400">
+        <h1 className="text-xl sm:text-2xl text-white font-semibold mb-2 sm:mb-4 truncate">{selectRoomName}</h1>
+        <div className="flex mb-2 sm:mb-4 gap-2 sm:gap-4 flex-wrap"> {/* レスポンシブ対応のスペーシング */}
         <div className="flex items-center mb-2">
           <label className="text-white mr-2">AI Provider:</label>
           <span className="bg-blue-600 text-white px-2 py-1 rounded text-sm">
@@ -560,8 +562,11 @@ const Chat = () => {
             モデル比較
           </button>
         </div>
+        </div>
       </div>
-      <div ref={scrollDiv} className="flex-grow overflow-y-auto mb-4">
+      
+      {/* メッセージエリア */}
+      <div ref={scrollDiv} className="flex-1 overflow-y-auto p-2 sm:p-4 pb-0 min-h-0">
           {messages.map((message, index) => (
             <div
               key={index}
@@ -659,7 +664,10 @@ const Chat = () => {
           )}
           {isLoading && !streamingMessage && <LoadingIcons.TailSpin />}
       </div>
-      <div className="flex-shrink-0 relative mx-1 sm:mx-0">
+      
+      {/* 固定入力エリア */}
+      <div className="flex-none bg-gray-500 p-2 sm:p-4 border-t border-gray-400">
+        <div className="relative">
           <textarea
             ref={textareaRef}
             className="w-full p-2 sm:p-3 pr-12 sm:pr-14 rounded border-2 focus:outline-none resize-none overflow-hidden min-h-[40px] text-sm sm:text-base"
@@ -703,6 +711,7 @@ const Chat = () => {
           </button>
           <span className="absolute right-2 sm:right-3 bottom-1 text-xs text-gray-400 italic">⌘+Enter to send</span>
         </div>
+      </div>
       
       <ModelComparison
         isOpen={showComparison}

@@ -47,7 +47,7 @@ export default function Home() {
         </div>
 
         {/* チャットエリア */}
-        <div className="flex-1 bg-blue-200">
+        <div className="flex-1 bg-blue-200 min-h-0">
           <Chat />
         </div>
       </div>
