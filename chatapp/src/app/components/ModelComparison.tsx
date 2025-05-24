@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import { FaTimes, FaRedo, FaCheck } from "react-icons/fa";
 import LoadingIcons from 'react-loading-icons';
+import { getModelDisplayName, getModelProvider } from '@/constants/models';
 
-type ComparisonResult = {
+export type ComparisonResult = {
   model: string;
   response: string;
   status: 'loading' | 'completed' | 'error';
@@ -21,25 +22,6 @@ type ModelComparisonProps = {
 
 const ModelComparison = ({ isOpen, onClose, question, results, onRegenerate }: ModelComparisonProps) => {
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
-
-  // モデル表示名の取得
-  const getModelDisplayName = (model: string) => {
-    const modelMap: { [key: string]: string } = {
-      "gpt-4o": "GPT-4o",
-      "gpt-4o-mini": "GPT-4o Mini",
-      "o1": "o1",
-      "o1-mini": "o1-mini",
-      "claude-3-7-sonnet-latest": "Claude-3-7-Sonnet",
-      "claude-3-5-sonnet-latest": "Claude-3-5-Sonnet",
-      "claude-3-5-haiku-latest": "Claude-3-5-Haiku",
-    };
-    return modelMap[model] || model;
-  };
-
-  // プロバイダーの取得
-  const getProvider = (model: string) => {
-    return model.startsWith('claude') ? 'Claude' : 'OpenAI';
-  };
 
   // レスポンスの文字数カウント
   const getResponseLength = (response: string) => {
@@ -110,11 +92,11 @@ const ModelComparison = ({ isOpen, onClose, question, results, onRegenerate }: M
                       {getModelDisplayName(result.model)}
                     </h3>
                     <span className={`text-xs px-2 py-1 rounded ${
-                      getProvider(result.model) === 'Claude' 
+                      getModelProvider(result.model) === 'Claude' 
                         ? 'bg-orange-100 text-orange-700' 
                         : 'bg-green-100 text-green-700'
                     }`}>
-                      {getProvider(result.model)}
+                      {getModelProvider(result.model)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

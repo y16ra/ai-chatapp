@@ -21,24 +21,29 @@ export default function Home() {
       )}
       
       {/* サイドバー */}
-      <div className={`
-        fixed lg:static inset-y-0 left-0 z-50 
-        w-80 lg:w-1/4 xl:w-1/5 
-        transform transition-transform duration-300 ease-in-out
-        lg:transform-none lg:transition-none
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        border-r
-      `}>
+      <nav 
+        className={`
+          fixed lg:static inset-y-0 left-0 z-50 
+          w-80 lg:w-1/4 xl:w-1/5 
+          transform transition-transform duration-300 ease-in-out
+          lg:transform-none lg:transition-none
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          border-r
+        `}
+        aria-label="メインナビゲーション"
+      >
         <Sidebar onClose={() => setIsSidebarOpen(false)} />
-      </div>
+      </nav>
 
       {/* メインコンテンツ */}
       <div className="flex-1 flex flex-col lg:ml-0">
         {/* モバイル用ヘッダー */}
-        <div className="lg:hidden bg-custom-blue text-white p-4 flex items-center justify-between">
+        <div className="lg:hidden bg-blue-900 text-white p-4 flex items-center justify-between">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="text-white p-2 hover:bg-blue-700 rounded"
+            aria-label={isSidebarOpen ? "サイドバーを閉じる" : "サイドバーを開く"}
+            aria-expanded={isSidebarOpen}
           >
             <FaBars size={20} />
           </button>

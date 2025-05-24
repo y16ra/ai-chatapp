@@ -82,7 +82,21 @@ Required in `chatapp/.env.local`:
 - **Solution**: `Chat.tsx:424-446`の再生成ボタン表示条件を修正
 - **Technical**: 最後のbotメッセージかどうかの判定ロジック(`isLastBotMessage`)を追加
 
-### Recent Work Completed (2025/5/24 - お気に入り機能実装)
+### Recent Work Completed (2024/12/30 - レスポンシブ&モデル比較&PRレビュー対応)
+- **Feature**: レスポンシブデザイン改善とAIモデル比較機能を実装
+  - レスポンシブデザイン：固定幅→完全レスポンシブ、モバイル用ハンバーガーメニュー実装
+  - AIモデル比較機能：4つのモデル(GPT-4o/mini, Claude-3-5-Sonnet/Haiku)で並列実行
+  - チャットヘッダー固定表示：スクロール時もコントロール部分が常に見える
+  - 新規ファイル：`src/app/components/ModelComparison.tsx`, `src/constants/models.ts`
+  - 変更ファイル：`src/app/page.tsx`, `src/app/components/Chat.tsx`, `src/app/components/Sidebar.tsx`
+
+- **PRレビュー対応**: コードレビューフィードバックに基づく品質向上
+  - `bg-custom-blue`未定義クラスを`bg-blue-900`に修正
+  - モデル定義を一元化（`constants/models.ts`）してDRY原則に準拠
+  - TypeScript型安全性向上：`ComparisonResult`型を明示的に使用
+  - アクセシビリティ改善：ハンバーガーメニューに`aria-label`、`aria-expanded`属性追加
+  - セマンティックHTML：サイドバーを`<nav>`要素に変更
+
 - **Feature**: AIメッセージお気に入り機能を実装
   - 新機能：AIメッセージにハートボタンを追加し、お気に入り登録/削除が可能
   - 追加ファイル：`src/app/components/Favorites.tsx` (お気に入り一覧表示コンポーネント)
@@ -99,6 +113,9 @@ Required in `chatapp/.env.local`:
 - ✅ 既読機能
 - ✅ 履歴クリア
 - ✅ お気に入り機能（AIメッセージの保存・一覧表示）
+- ✅ レスポンシブデザイン（モバイル対応完了）
+- ✅ AIモデル比較機能（4モデル並列実行）
+- ✅ 固定ヘッダー/フッター（スクロール時の操作性向上）
 
 ## Next Actions
 
@@ -118,3 +135,6 @@ Required in `chatapp/.env.local`:
 - 検索機能実装時はFirestore full-text searchの制限を考慮
 - シンタックスハイライトは`react-syntax-highlighter`ライブラリの導入を検討
 - 大量メッセージでのパフォーマンス最適化が必要
+- モデル比較機能のAPI使用量監視とコスト管理
+- アクセシビリティ対応の継続的改善
+- TypeScript型安全性の向上（`any`型の削除）

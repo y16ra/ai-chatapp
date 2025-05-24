@@ -7,7 +7,8 @@ import { db } from "../../../firebase";
 import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, getDocs, deleteDoc, updateDoc } from "firebase/firestore";
 import { useAppContext } from "@/context/AppContext";
 import LoadingIcons from 'react-loading-icons';
-import ModelComparison from './ModelComparison';
+import ModelComparison, { ComparisonResult } from './ModelComparison';
+import { AI_MODELS, DEFAULT_COMPARISON_MODELS, getModelProvider, isClaudeModel } from '@/constants/models';
 
 type Message = {
   text: string;
@@ -29,7 +30,7 @@ const Chat = () => {
   const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showComparison, setShowComparison] = useState<boolean>(false);
-  const [comparisonResults, setComparisonResults] = useState<any[]>([]);
+  const [comparisonResults, setComparisonResults] = useState<ComparisonResult[]>([]);
   const [comparisonQuestion, setComparisonQuestion] = useState<string>("");
 
   const scrollDiv = useRef<HTMLDivElement>(null);
@@ -58,29 +59,9 @@ const Chat = () => {
     }
   };
 
-  // モデルの選択肢を配列で定義
-  const modelOptions = [
-    { value: "gpt-4o", label: "GPT-4o" },
-    { value: "gpt-4o-mini", label: "GPT-4o Mini" },
-    { value: "o1", label: "o1" },
-    { value: "o1-mini", label: "o1-mini" },
-    { value: "claude-3-7-sonnet-latest", label: "Claude-3-7-Sonnet" },
-    { value: "claude-3-5-sonnet-latest", label: "Claude-3-5-Sonnet" },
-    { value: "claude-3-5-haiku-latest", label: "Claude-3-5-Haiku" },
-  ];
-
-  // Check if the selected model is a Claude model
-  const isClaudeModel = (model: string): boolean => {
-    return model.startsWith('claude');
-  };
-
   // Get the current AI provider based on the selected model
   const getCurrentAIProvider = (): string => {
-    if (isClaudeModel(selectedModel)) {
-      return "Claude";
-    } else {
-      return "OpenAI";
-    }
+    return getModelProvider(selectedModel);
   };
 
     // Retrieve messages for the selected room from Firestore
@@ -534,9 +515,9 @@ const Chat = () => {
             onChange={(e) => setSelectedModel(e.target.value)}
             className="w-full sm:w-auto px-2 sm:px-3 py-2 bg-white text-gray-700 appearance-none focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm sm:text-base"
           >
-            {modelOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            {AI_MODELS.map((model) => (
+              <option key={model.value} value={model.value}>
+                {model.label}
               </option>
             ))}
           </select>
@@ -552,8 +533,7 @@ const Chat = () => {
           <button
             onClick={() => {
               if (inputMessage.trim()) {
-                const selectedModels = ["gpt-4o", "gpt-4o-mini", "claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"];
-                compareModels(inputMessage, selectedModels);
+                compareModels(inputMessage, DEFAULT_COMPARISON_MODELS);
               }
             }}
             disabled={!inputMessage.trim() || isLoading}

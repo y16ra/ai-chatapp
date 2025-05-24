@@ -100,7 +100,7 @@ const Sidebar = ({ onClose }: SidebarProps) => {
   }
 
   return (
-    <div className="bg-custom-blue h-full overflow-y-auto px-5 flex flex-col">
+    <div className="bg-blue-900 h-full overflow-y-auto px-5 flex flex-col">
       <div className="flex-grow">
         <div
           onClick={addRoom}
