@@ -15,7 +15,10 @@ const SUPPORTED_MODELS = [
   'gpt-4o',
   'gpt-4o-mini',
   'o1',
-  'o1-mini'
+  'o1-mini',
+  'gpt-4.1',
+  'gpt-4.1-mini',
+  'gpt-4.1-nano'
 ];
 
 export async function POST(req: NextRequest) {

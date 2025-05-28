@@ -32,6 +32,7 @@ const Chat = () => {
   const [showComparison, setShowComparison] = useState<boolean>(false);
   const [comparisonResults, setComparisonResults] = useState<ComparisonResult[]>([]);
   const [comparisonQuestion, setComparisonQuestion] = useState<string>("");
+  const [enableWebSearch, setEnableWebSearch] = useState<boolean>(false);
 
   const scrollDiv = useRef<HTMLDivElement>(null);
 
@@ -164,7 +165,8 @@ const Chat = () => {
             text: message.text,
             sender: message.sender
           })),
-          model: selectedModel
+          model: selectedModel,
+          enableWebSearch: isClaudeModel(selectedModel) ? enableWebSearch : false
         }),
       });
 
@@ -194,6 +196,17 @@ const Chat = () => {
               if (parsed.content) {
                 fullResponse += parsed.content;
                 setStreamingMessage(fullResponse);
+              } else if (parsed.type === 'tool_use_start') {
+                // Web検索開始の表示
+                const toolInfo = `🔍 Web検索中: ${parsed.tool.name}\n\n`;
+                fullResponse += toolInfo;
+                setStreamingMessage(fullResponse);
+              } else if (parsed.type === 'tool_input_delta') {
+                // ツール入力パラメータの表示（オプション）
+                console.log('Tool input:', parsed.partial_json);
+              } else if (parsed.type === 'tool_use_complete') {
+                // Web検索完了の表示（ログのみ、UIには表示しない）
+                console.log('Web search completed for index:', parsed.index);
               }
             } catch (e) {
               // Ignore JSON parsing errors
@@ -279,7 +292,8 @@ const Chat = () => {
             text: message.text,
             sender: message.sender
           })),
-          model: selectedModel
+          model: selectedModel,
+          enableWebSearch: isClaudeModel(selectedModel) ? enableWebSearch : false
         }),
       });
 
@@ -309,6 +323,17 @@ const Chat = () => {
               if (parsed.content) {
                 fullResponse += parsed.content;
                 setStreamingMessage(fullResponse);
+              } else if (parsed.type === 'tool_use_start') {
+                // Web検索開始の表示
+                const toolInfo = `🔍 Web検索中: ${parsed.tool.name}\n\n`;
+                fullResponse += toolInfo;
+                setStreamingMessage(fullResponse);
+              } else if (parsed.type === 'tool_input_delta') {
+                // ツール入力パラメータの表示（オプション）
+                console.log('Tool input:', parsed.partial_json);
+              } else if (parsed.type === 'tool_use_complete') {
+                // Web検索完了の表示（ログのみ、UIには表示しない）
+                console.log('Web search completed for index:', parsed.index);
               }
             } catch (e) {
               // Ignore JSON parsing errors
@@ -512,7 +537,13 @@ const Chat = () => {
           <label className="text-white mr-2 text-sm sm:text-base">Select AI Model:</label>
           <select
             value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
+            onChange={(e) => {
+              setSelectedModel(e.target.value);
+              // Claudeモデル以外の場合はWeb検索を無効化
+              if (!isClaudeModel(e.target.value)) {
+                setEnableWebSearch(false);
+              }
+            }}
             className="w-full sm:w-auto px-2 sm:px-3 py-2 bg-white text-gray-700 appearance-none focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm sm:text-base"
           >
             {AI_MODELS.map((model) => (
@@ -521,6 +552,20 @@ const Chat = () => {
               </option>
             ))}
           </select>
+          {isClaudeModel(selectedModel) && (
+            <div className="mt-2 flex items-center">
+              <input
+                type="checkbox"
+                id="enableWebSearch"
+                checked={enableWebSearch}
+                onChange={(e) => setEnableWebSearch(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="enableWebSearch" className="ml-2 block text-sm text-white">
+                Web検索を有効化
+              </label>
+            </div>
+          )}
         </div>
         <div className="mb-2 flex gap-2">
           <button
