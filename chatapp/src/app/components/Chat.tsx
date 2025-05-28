@@ -562,7 +562,7 @@ const Chat = () => {
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="enableWebSearch" className="ml-2 block text-sm text-white">
-                Web検索を有効化
+                Enable Web Search
               </label>
             </div>
           )}
