@@ -5,8 +5,9 @@ A real-time chat application supporting multiple AI models from OpenAI and Anthr
 ## ✨ Key Features
 
 ### 🤖 AI Capabilities
-- **Multiple AI Models**: GPT-4o, GPT-4o-mini, o1, o1-mini, Claude-3-7-Sonnet, Claude-3-5-Sonnet, Claude-3-5-Haiku
-- **AI Model Comparison**: Compare responses from 4 different models in parallel for the same question
+- **Multiple AI Models**: Latest GPT-4.1 series, Claude Sonnet 4, Claude 3.5 Haiku
+- **Web Search Integration**: Real-time web search for Claude models to access latest information
+- **AI Model Comparison**: Compare responses from multiple models in parallel for the same question
 - **Streaming Responses**: Real-time display of AI responses as they generate
 - **Message Regeneration**: Regenerate AI responses to get alternative answers
 
@@ -138,7 +139,8 @@ Firestore:
 1. Login or create an account
 2. Click "New Chat" to create a room
 3. Select an AI model
-4. Type your message and send
+4. For Claude models: Enable "Enable Web Search" checkbox for real-time information
+5. Type your message and send
 
 ### AI Model Comparison
 1. Enter your question in the text area
@@ -157,10 +159,17 @@ You can add or modify models in `src/constants/models.ts`:
 
 ```typescript
 export const AI_MODELS: AIModel[] = [
-  { value: "gpt-4o", label: "GPT-4o", provider: 'OpenAI' },
+  { value: "gpt-4.1", label: "GPT-4.1", provider: 'OpenAI' },
+  { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4", provider: 'Claude' },
   // Add new models here
 ];
 ```
+
+### Web Search Feature
+- Web search is available only for Claude models
+- Requires Anthropic Console configuration to enable web search tool
+- Search progress is indicated with 🔍 during execution
+- Provides access to real-time information and current events
 
 ## 📄 License
 

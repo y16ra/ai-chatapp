@@ -41,10 +41,11 @@ users/{userId}/favorites/{favoriteId} → { messageId, roomId, messageText, crea
 ```
 
 **AI Integration:**
-- `/api/openai` - GPT models (4o, 4o-mini, o1, o1-mini)
-- `/api/claude` - Claude models (3-7-Sonnet, 3-5-Sonnet, 3-5-Haiku)
+- `/api/openai` - GPT models (4.1, 4.1-mini, 4.1-nano, legacy models)
+- `/api/claude` - Claude models (Sonnet 4, 3-5-Haiku) with web search capability
 - Client-side routing based on model selection
 - Full conversation context sent with each request
+- **Web Search Tool**: Claude models support real-time web search via `web_search_20250305` tool
 
 **Real-time Sync:**
 - Firestore `onSnapshot` for live message updates
@@ -67,6 +68,16 @@ Required in `chatapp/.env.local`:
 - `src/context/` - React context providers
 
 ## Current Status
+
+### Latest Work Completed (2025/5/29)
+- **Feature**: Claude Web Search Tool統合 (commit: 415876c)
+  - 新機能：Claude APIの`web_search_20250305` tool実装
+  - UI改善：Claudeモデル限定でweb検索オン/オフのチェックボックス追加
+  - 性能向上：max_tokens 1000→4000（web検索時6000）に増加
+  - ストリーミング対応：tool_useイベント処理で検索進行状況表示
+  - モデル更新：Claude Sonnet 4、GPT-4.1シリーズ対応
+  - 変更ファイル：`route.ts` (+116/-25), `Chat.tsx` (+30/-4), `models.ts` (+8/-2)
+  - 主な機能：リアルタイム最新情報検索、🔍検索中表示、完全な検索結果回答生成
 
 ### Recent Work Completed (2025/5/24)
 - **Feature**: AIレスポンスの再生成機能を追加し、メッセージ表示を改善 (commit: 4f9af6b)
@@ -116,31 +127,33 @@ Required in `chatapp/.env.local`:
 - ✅ レスポンシブデザイン（モバイル対応完了）
 - ✅ AIモデル比較機能（4モデル並列実行）
 - ✅ 固定ヘッダー/フッター（スクロール時の操作性向上）
+- ✅ **Web検索機能（Claudeモデル限定）** - リアルタイム最新情報取得
 
 ## Next Actions
 
 ### 優先度高：実装推奨機能
-1. **AIモデル更新** - 最新のOpenAI/Anthropicモデルに対応
+1. **Web検索機能の拡張** ✅ **完了 (2025/5/29)**
+   - Claude APIのweb_search_20250305 tool統合
+   - UI: Claudeモデル限定チェックボックス
+   - ストリーミング対応とmax_tokens最適化
    
-   **更新対象モデル:**
-   | Provider | 現在 | 更新候補 | 改善点 |
-   |----------|------|----------|---------|
-   | OpenAI | gpt-4o | gpt-4o-2024-11-20 | 性能向上、コスト最適化 |
-   | OpenAI | gpt-4o-mini | gpt-4o-mini-2024-07-18 | 応答速度改善 |
-   | OpenAI | o1 | o1-2024-12-17 | 推論能力強化 |
-   | OpenAI | o1-mini | o1-mini-2024-09-12 | 軽量推論性能向上 |
-   | Anthropic | claude-3-7-sonnet-latest | claude-3-5-sonnet-20241022 | 最新アーキテクチャ |
-   | Anthropic | claude-3-5-sonnet-latest | claude-3-5-sonnet-20241022 | 安定版指定 |
-   | Anthropic | claude-3-5-haiku-latest | claude-3-5-haiku-20241022 | 高速応答最適化 |
+2. **AIモデル更新** ✅ **部分完了 (2025/5/29)**
    
-   **実装タスク:**
-   - 新モデルの性能・コスト特性の調査と最適化
-   - API仕様変更への対応確認
-   - 比較機能の対象モデル見直し
-2. **コードブロック シンタックスハイライト** - コード表示の改善
-3. **メッセージ検索機能** - 過去の会話を効率的に検索
-4. **メッセージ編集機能** - 送信済みメッセージの修正
-5. **ダークモード切り替え** - UI/UX改善
+   **実装済みモデル:**
+   | Provider | 実装済み | 状況 |
+   |----------|----------|------|
+   | OpenAI | gpt-4.1, gpt-4.1-mini, gpt-4.1-nano | 最新モデル対応済み |
+   | Anthropic | claude-sonnet-4-20250514 | 最新モデル対応済み |
+   | Anthropic | claude-3-5-haiku-latest | 継続サポート |
+   
+   **追加検討:**
+   - レガシーモデルの段階的廃止
+   - 新モデルの性能・コスト特性の最適化
+   
+3. **コードブロック シンタックスハイライト** - コード表示の改善
+4. **メッセージ検索機能** - 過去の会話を効率的に検索
+5. **メッセージ編集機能** - 送信済みメッセージの修正
+6. **ダークモード切り替え** - UI/UX改善
 
 ### 中長期的な機能拡張
 - ファイルアップロード対応
@@ -149,6 +162,11 @@ Required in `chatapp/.env.local`:
 - システムプロンプト設定
 
 ### 技術的考慮事項
+- **Web検索機能の運用**:
+  - Anthropic Consoleでのweb search tool有効化確認
+  - max_tokens設定（通常4000、web検索時6000）の監視
+  - tool_useイベントのストリーミング処理安定性
+  - 検索クエリ最適化とレート制限管理
 - **AIモデル更新時の注意点**:
   - 新モデルのAPI仕様変更への対応
   - モデル別レート制限とコスト構造の確認
