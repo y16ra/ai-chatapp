@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { GoPaperAirplane } from "react-icons/go";
 import { FaCheck, FaCheckDouble, FaRedo, FaHeart, FaRegHeart } from "react-icons/fa";
+import { HiChatBubbleLeft, HiCog6Tooth, HiGlobeAlt, HiTrash, HiChartBarSquare } from "react-icons/hi2";
 import { db } from "../../../firebase";
 import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, getDocs, deleteDoc, updateDoc } from "firebase/firestore";
 import { useAppContext } from "@/context/AppContext";
@@ -524,69 +525,63 @@ const Chat = () => {
   return (
     <div className="bg-gray-500 h-full flex flex-col">
       {/* 固定ヘッダー */}
-      <div className="flex-none bg-gray-500 p-2 sm:p-4 border-b border-gray-400">
-        <h1 className="text-xl sm:text-2xl text-white font-semibold mb-2 sm:mb-4 truncate">{selectRoomName}</h1>
-        <div className="flex mb-2 sm:mb-4 gap-2 sm:gap-4 flex-wrap"> {/* レスポンシブ対応のスペーシング */}
-        <div className="flex items-center mb-2">
-          <label className="text-white mr-2">AI Provider:</label>
-          <span className="bg-blue-600 text-white px-2 py-1 rounded text-sm">
-            {getCurrentAIProvider()}
-          </span>
-        </div>
-        <div className="mb-2 flex-1 min-w-0">
-          <label className="text-white mr-2 text-sm sm:text-base">Select AI Model:</label>
-          <select
-            value={selectedModel}
-            onChange={(e) => {
-              setSelectedModel(e.target.value);
-              // Claudeモデル以外の場合はWeb検索を無効化
-              if (!isClaudeModel(e.target.value)) {
-                setEnableWebSearch(false);
-              }
-            }}
-            className="w-full sm:w-auto px-2 sm:px-3 py-2 bg-white text-gray-700 appearance-none focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm sm:text-base"
-          >
-            {AI_MODELS.map((model) => (
-              <option key={model.value} value={model.value}>
-                {model.label}
-              </option>
-            ))}
-          </select>
-          {isClaudeModel(selectedModel) && (
-            <div className="mt-2 flex items-center">
-              <input
-                type="checkbox"
-                id="enableWebSearch"
-                checked={enableWebSearch}
-                onChange={(e) => setEnableWebSearch(e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="enableWebSearch" className="ml-2 block text-sm text-white">
-                Enable Web Search
-              </label>
+      <div className="flex-none bg-gradient-to-r from-slate-800 to-slate-700 border-b border-slate-600 p-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Room Info Section */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                <HiChatBubbleLeft className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-xl font-semibold text-white">{selectRoomName || "New Chat"}</h1>
             </div>
-          )}
-        </div>
-        <div className="mb-2 flex gap-2">
-          <button
-            onClick={clearChatHistory}
-            disabled={!selectedRoom || messages.length === 0}
-            className="bg-red-500 hover:bg-red-600 text-white px-2 sm:px-3 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-          >
-            履歴クリア
-          </button>
-          <button
-            onClick={() => {
-              if (inputMessage.trim()) {
-                compareModels(inputMessage, DEFAULT_COMPARISON_MODELS);
-              }
-            }}
-            disabled={!inputMessage.trim() || isLoading}
-            className="bg-purple-500 hover:bg-purple-600 text-white px-2 sm:px-3 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-          >
-            モデル比較
-          </button>
-        </div>
+            <div className="flex items-center space-x-2">
+              <span className="bg-blue-600/20 text-blue-300 px-3 py-1 rounded-lg text-sm border border-blue-500/30">
+                {getCurrentAIProvider()}
+              </span>
+            </div>
+          </div>
+
+          {/* Compact Control Panel */}
+          <div className="bg-slate-700/50 backdrop-blur-sm rounded-lg p-2 border border-slate-600/50">
+            <div className="flex items-center justify-between">
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={clearChatHistory}
+                  disabled={!selectedRoom || messages.length === 0}
+                  className="bg-red-500/20 hover:bg-red-500/30 disabled:hover:bg-red-500/20 text-red-300 disabled:text-red-400 px-2 py-1 rounded transition-colors text-xs flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Clear chat history"
+                >
+                  <HiTrash className="w-3 h-3" />
+                  <span className="hidden sm:inline">Clear</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (inputMessage.trim()) {
+                      compareModels(inputMessage, DEFAULT_COMPARISON_MODELS);
+                    }
+                  }}
+                  disabled={!inputMessage.trim() || isLoading}
+                  className="bg-purple-500/20 hover:bg-purple-500/30 disabled:hover:bg-purple-500/20 text-purple-300 disabled:text-purple-400 px-2 py-1 rounded transition-colors text-xs flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Compare models"
+                >
+                  <HiChartBarSquare className="w-3 h-3" />
+                  <span className="hidden sm:inline">Compare</span>
+                </button>
+              </div>
+
+              {/* Status Info */}
+              <div className="flex items-center space-x-3 text-xs">
+                <div className="text-slate-400">
+                  {messages.length} messages
+                </div>
+                <div className={`px-2 py-0.5 rounded text-xs ${isLoading ? 'bg-yellow-500/20 text-yellow-300' : 'bg-green-500/20 text-green-300'}`}>
+                  {isLoading ? "Generating..." : "Ready"}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -691,50 +686,106 @@ const Chat = () => {
       </div>
       
       {/* 固定入力エリア */}
-      <div className="flex-none bg-gray-500 p-2 sm:p-4 border-t border-gray-400">
-        <div className="relative">
-          <textarea
-            ref={textareaRef}
-            className="w-full p-2 sm:p-3 pr-12 sm:pr-14 rounded border-2 focus:outline-none resize-none overflow-hidden min-h-[40px] text-sm sm:text-base"
-            placeholder="Type a message..."
-            value={inputMessage}
-            onCompositionStart={startComposition}
-            onCompositionEnd={endComposition}
-            onChange={(e) => {
-              setInputMessage(e.target.value);
+      <div className="flex-none bg-gradient-to-r from-slate-800 to-slate-700 border-t border-slate-600">
+        {/* Message Input */}
+        <div className="p-2 sm:p-4">
+          <div className="relative">
+            <textarea
+              ref={textareaRef}
+              className="w-full p-2 sm:p-3 pr-12 sm:pr-14 rounded-lg border-2 border-slate-600 bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none overflow-hidden min-h-[40px] text-sm sm:text-base"
+              placeholder="Type a message..."
+              value={inputMessage}
+              onCompositionStart={startComposition}
+              onCompositionEnd={endComposition}
+              onChange={(e) => {
+                setInputMessage(e.target.value);
 
-              // Auto-resize textarea
-              if (textareaRef.current) {
-                textareaRef.current.style.height = 'auto';
-                textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                if (e.metaKey) {
-                  // Command+Enter to send message
-                  e.preventDefault();
-                  handleSendMessage();
-                } else {
-                  // Auto-resize on Enter key press after the default line break is added
-                  setTimeout(() => {
-                    if (textareaRef.current) {
-                      textareaRef.current.style.height = 'auto';
-                      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-                    }
-                  }, 0);
+                // Auto-resize textarea
+                if (textareaRef.current) {
+                  textareaRef.current.style.height = 'auto';
+                  textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
                 }
-              }
-            }}
-            rows={1}
-          />
-          <button
-            className="absolute right-2 sm:right-3 top-2 sm:top-3 rounded p-1 hover:bg-gray-100"
-            onClick={handleSendMessage}
-          >
-            <GoPaperAirplane className="text-sm sm:text-base" />
-          </button>
-          <span className="absolute right-2 sm:right-3 bottom-1 text-xs text-gray-400 italic">⌘+Enter to send</span>
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (e.metaKey) {
+                    // Command+Enter to send message
+                    e.preventDefault();
+                    handleSendMessage();
+                  } else {
+                    // Auto-resize on Enter key press after the default line break is added
+                    setTimeout(() => {
+                      if (textareaRef.current) {
+                        textareaRef.current.style.height = 'auto';
+                        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+                      }
+                    }, 0);
+                  }
+                }
+              }}
+              rows={1}
+            />
+            <button
+              className="absolute right-2 sm:right-3 top-2 sm:top-3 rounded p-1 hover:bg-slate-600 text-white"
+              onClick={handleSendMessage}
+            >
+              <GoPaperAirplane className="text-sm sm:text-base" />
+            </button>
+            <span className="absolute right-2 sm:right-3 bottom-1 text-xs text-slate-400 italic">⌘+Enter to send</span>
+          </div>
+        </div>
+
+        {/* Compact Model Selection & Controls */}
+        <div className="px-2 sm:px-4 pb-1">
+          <div className="bg-slate-700/50 backdrop-blur-sm rounded-lg p-2 border border-slate-600/50">
+            <div className="flex items-center justify-between space-x-3">
+              {/* Model Selection */}
+              <div className="flex items-center space-x-2 flex-1">
+                <HiCog6Tooth className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                <select
+                  value={selectedModel}
+                  onChange={(e) => {
+                    setSelectedModel(e.target.value);
+                    // Claudeモデル以外の場合はWeb検索を無効化
+                    if (!isClaudeModel(e.target.value)) {
+                      setEnableWebSearch(false);
+                    }
+                  }}
+                  className="flex-1 bg-slate-600 hover:bg-slate-500 text-white rounded px-2 py-1 border-0 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-xs appearance-none cursor-pointer"
+                >
+                  {AI_MODELS.map((model) => (
+                    <option key={model.value} value={model.value}>
+                      {model.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Web Search Toggle */}
+              <div className="flex items-center space-x-2">
+                <HiGlobeAlt className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                {isClaudeModel(selectedModel) ? (
+                  <label className="flex items-center cursor-pointer">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={enableWebSearch}
+                        onChange={(e) => setEnableWebSearch(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`w-6 h-3 rounded-full transition-colors ${enableWebSearch ? 'bg-blue-500' : 'bg-slate-500'}`}></div>
+                      <div className={`absolute left-0.5 top-0.5 w-2 h-2 bg-white rounded-full transition-transform ${enableWebSearch ? 'translate-x-3' : 'translate-x-0'}`}></div>
+                    </div>
+                    <span className="ml-1 text-xs text-slate-300 hidden sm:inline">
+                      {enableWebSearch ? 'Web' : 'Off'}
+                    </span>
+                  </label>
+                ) : (
+                  <span className="text-xs text-slate-500">—</span>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
