@@ -21,15 +21,33 @@ const SUPPORTED_MODELS = [
   'gpt-4.1-nano'
 ];
 
+// Web search is only supported by specific models (gpt-4o and gpt-4o-mini)
+const WEB_SEARCH_SUPPORTED_MODELS = [
+  'gpt-4o',
+  'gpt-4o-mini'
+];
+
+// Map regular models to their search preview versions
+const SEARCH_MODEL_MAP: Record<string, string> = {
+  'gpt-4o': 'gpt-4o-search-preview',
+  'gpt-4o-mini': 'gpt-4o-mini-search-preview'
+};
+
 export async function POST(req: NextRequest) {
-  const { inputMessage, context, model } = await req.json();
-  console.log(inputMessage, model);
+  const { inputMessage, context, model, enableWebSearch } = await req.json();
+  console.log(inputMessage, model, enableWebSearch);
   if (!SUPPORTED_MODELS.includes(model)) {
     return NextResponse.json({ error: 'Unsupported model' }, { status: 400 });
   }
 
   try {
-    const stream = await openai.chat.completions.create({
+    // Use search preview model if web search is enabled
+    let actualModel = model || "gpt-4o-mini";
+    if (enableWebSearch && WEB_SEARCH_SUPPORTED_MODELS.includes(model)) {
+      actualModel = SEARCH_MODEL_MAP[model] || model;
+    }
+
+    const requestParams: any = {
       messages: [
         ...context.map((msg: { text: string, sender: string }) => ({
           role: msg.sender === "user" ? "user" : "assistant",
@@ -37,24 +55,40 @@ export async function POST(req: NextRequest) {
         })),
         { role: "user", content: inputMessage }
       ],
-      model: model || "gpt-4o-mini",
+      model: actualModel,
       stream: true,
-    });
+    };
+
+    // Add web search tool if enabled and supported by the model  
+    if (enableWebSearch && WEB_SEARCH_SUPPORTED_MODELS.includes(model)) {
+      // For search preview models, web search is automatically enabled
+      // No explicit tools configuration needed
+      console.log('Using search preview model:', actualModel);
+    }
+
+    const stream = await openai.chat.completions.create(requestParams);
 
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       async start(controller) {
         try {
           for await (const chunk of stream) {
-            const content = chunk.choices[0]?.delta?.content || '';
+            const delta = chunk.choices[0]?.delta;
+            
+            // Handle regular content
+            const content = delta?.content || '';
             if (content) {
               const data = `data: ${JSON.stringify({ content })}\n\n`;
               controller.enqueue(encoder.encode(data));
             }
+
+            // For search preview models, web search is integrated into the response
+            // No special tool handling needed - search results are included in content
           }
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
           controller.close();
         } catch (error) {
+          console.error('OpenAI streaming error:', error);
           controller.error(error);
         }
       },
@@ -68,40 +102,11 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: 'Error generating response from OpenAI' }, { status: 500 });
+    console.error('OpenAI API Error:', error);
+    return NextResponse.json({ 
+      error: 'Error generating response from OpenAI',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 
-// Vector Storeから関連情報を使った回答を取得する関数
-async function retrieveAgentData(inputMessage: string, assistantId: string) {
-  const thread = await openai.beta.threads.create({
-    messages: [{
-      role: "user",
-      content: [
-        {
-          type: "text",
-          text: inputMessage,
-        },
-      ],
-    }],
-  });
-  let run = await openai.beta.threads.runs.createAndPoll(
-    thread.id,
-    {
-      assistant_id: assistantId,
-    }
-  );
-  if (run.status === 'completed') {
-    const messages = await openai.beta.threads.messages.list(
-      run.thread_id
-    );
-    console.log(messages.data[0].content)
-    if (messages.data[0].content[0].type === "text") {
-
-      return messages.data[0].content[0].text.value;
-    }
-  } else {
-    console.log(run.status);
-  }
-  return null;
-}

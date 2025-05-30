@@ -9,7 +9,7 @@ import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, T
 import { useAppContext } from "@/context/AppContext";
 import LoadingIcons from 'react-loading-icons';
 import ModelComparison, { ComparisonResult } from './ModelComparison';
-import { AI_MODELS, DEFAULT_COMPARISON_MODELS, getModelProvider, isClaudeModel } from '@/constants/models';
+import { AI_MODELS, DEFAULT_COMPARISON_MODELS, getModelProvider, isClaudeModel, supportsWebSearch } from '@/constants/models';
 
 type Message = {
   text: string;
@@ -167,7 +167,7 @@ const Chat = () => {
             sender: message.sender
           })),
           model: selectedModel,
-          enableWebSearch: isClaudeModel(selectedModel) ? enableWebSearch : false
+          enableWebSearch: supportsWebSearch(selectedModel) ? enableWebSearch : false
         }),
       });
 
@@ -294,7 +294,7 @@ const Chat = () => {
             sender: message.sender
           })),
           model: selectedModel,
-          enableWebSearch: isClaudeModel(selectedModel) ? enableWebSearch : false
+          enableWebSearch: supportsWebSearch(selectedModel) ? enableWebSearch : false
         }),
       });
 
@@ -747,7 +747,7 @@ const Chat = () => {
                   onChange={(e) => {
                     setSelectedModel(e.target.value);
                     // Claudeモデル以外の場合はWeb検索を無効化
-                    if (!isClaudeModel(e.target.value)) {
+                    if (!supportsWebSearch(e.target.value)) {
                       setEnableWebSearch(false);
                     }
                   }}
@@ -764,7 +764,7 @@ const Chat = () => {
               {/* Web Search Toggle */}
               <div className="flex items-center space-x-2">
                 <HiGlobeAlt className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                {isClaudeModel(selectedModel) ? (
+                {supportsWebSearch(selectedModel) ? (
                   <label className="flex items-center cursor-pointer">
                     <div className="relative">
                       <input

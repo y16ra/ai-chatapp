@@ -5,6 +5,8 @@ export type AIModel = {
 };
 
 export const AI_MODELS: AIModel[] = [
+  { value: "gpt-4o", label: "GPT-4o", provider: 'OpenAI' },
+  { value: "gpt-4o-mini", label: "GPT-4o Mini", provider: 'OpenAI' },
   { value: "gpt-4.1", label: "GPT-4.1", provider: 'OpenAI' },
   { value: "gpt-4.1-mini", label: "GPT-4.1 Mini", provider: 'OpenAI' },
   { value: "gpt-4.1-nano", label: "GPT-4.1 Nano", provider: 'OpenAI' },
@@ -31,4 +33,14 @@ export const getModelProvider = (modelValue: string): 'OpenAI' | 'Claude' => {
 
 export const isClaudeModel = (modelValue: string): boolean => {
   return getModelProvider(modelValue) === 'Claude';
+};
+
+// Web search is supported by specific OpenAI models (only gpt-4o and gpt-4o-mini)
+const WEB_SEARCH_SUPPORTED_OPENAI_MODELS = [
+  'gpt-4o',
+  'gpt-4o-mini'
+];
+
+export const supportsWebSearch = (modelValue: string): boolean => {
+  return isClaudeModel(modelValue) || WEB_SEARCH_SUPPORTED_OPENAI_MODELS.includes(modelValue);
 };
