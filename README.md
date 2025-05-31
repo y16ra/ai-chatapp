@@ -17,7 +17,7 @@ Open [http://localhost:3000](http://localhost:3000) to start chatting!
 ## ✨ Key Features
 
 - **Multiple AI Models**: Latest GPT-4.1 series, Claude Sonnet 4, Claude 3.5 Haiku
-- **Web Search Integration**: Real-time web search for Claude models with latest information
+- **Web Search Integration**: Real-time web search for both Claude and OpenAI models with latest information
 - **AI Model Comparison**: Compare responses from multiple models simultaneously
 - **Real-time Chat**: Instant messaging with streaming AI responses
 - **Multi-room Support**: Create and manage multiple chat rooms
@@ -93,7 +93,7 @@ Firestore
 - ✅ **Real-time messaging** with Firestore listeners
 - ✅ **Read status tracking** for message management
 - ✅ **Favorites system** for important messages
-- ✅ **Web search integration** for Claude models (latest information)
+- ✅ **Web search integration** for both Claude and OpenAI models (latest information)
 - ✅ **User-specific data** with proper security rules
 
 ## ⚙️ Development Setup
@@ -103,6 +103,7 @@ Firestore
 - Firebase project with Firestore and Auth enabled
 - OpenAI API key
 - Anthropic API key with web search tool enabled in Console
+- OpenAI API key (GPT-4o/GPT-4o-mini support web search)
 
 ### Environment Configuration
 

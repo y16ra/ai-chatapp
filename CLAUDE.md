@@ -79,6 +79,18 @@ Required in `chatapp/.env.local`:
   - 変更ファイル：`route.ts` (+116/-25), `Chat.tsx` (+30/-4), `models.ts` (+8/-2)
   - 主な機能：リアルタイム最新情報検索、🔍検索中表示、完全な検索結果回答生成
 
+### Recent Work Completed (2025/5/30 - OpenAI Web Search Implementation)
+- **Feature**: OpenAI Web search機能を実装し、両プロバイダーでWeb検索を統一 (commit: 8aec6a8)
+  - 新機能：GPT-4o/GPT-4o-miniでのWeb search対応
+  - UI改善：Web searchトグルをOpenAI対応モデルでも表示
+  - 技術実装：search-previewモデルへの自動切り替え機能
+  - 変更ファイル：`src/app/api/openai/route.ts`, `src/app/components/Chat.tsx`, `src/constants/models.ts`
+  - 主な機能：
+    - gpt-4o + Web search ON → `gpt-4o-search-preview`を自動使用
+    - gpt-4o-mini + Web search ON → `gpt-4o-mini-search-preview`を自動使用
+    - `supportsWebSearch`関数でWeb search対応モデルの統一判定
+    - エラーハンドリング改善とコード整理
+
 ### Recent Work Completed (2025/5/24)
 - **Feature**: AIレスポンスの再生成機能を追加し、メッセージ表示を改善 (commit: 4f9af6b)
   - 新機能：AIメッセージの再生成ボタンを実装
@@ -88,7 +100,7 @@ Required in `chatapp/.env.local`:
 - **Feature**: ストリーミング応答機能を追加し、チャットコンポーネントを更新 (commit: b083ecc)
 - **Feature**: CLAUDE.mdを追加し、開発コマンドやアーキテクチャ概要を記載 (commit: 1ea2201)
 
-### Today's Bug Fix Session
+### Previous Bug Fix Session (2025/5/24)
 - **Issue**: 最後のAIメッセージ以外の再生成ボタンを押すと、生成されたメッセージに再生成ボタンが表示されない
 - **Solution**: `Chat.tsx:424-446`の再生成ボタン表示条件を修正
 - **Technical**: 最後のbotメッセージかどうかの判定ロジック(`isLastBotMessage`)を追加
@@ -127,7 +139,9 @@ Required in `chatapp/.env.local`:
 - ✅ レスポンシブデザイン（モバイル対応完了）
 - ✅ AIモデル比較機能（4モデル並列実行）
 - ✅ 固定ヘッダー/フッター（スクロール時の操作性向上）
-- ✅ **Web検索機能（Claudeモデル限定）** - リアルタイム最新情報取得
+- ✅ **Web search機能（両プロバイダー対応完了）**
+  - **Claude**: 全モデルでweb_search_20250305ツールを使用
+  - **OpenAI**: GPT-4o/GPT-4o-miniでsearch-previewモデルを自動切り替え
 
 ## Next Actions
 
