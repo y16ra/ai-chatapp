@@ -29,12 +29,91 @@ Open [http://localhost:3000](http://localhost:3000) to start chatting!
 
 ## Project Structure
 
+### 📁 Directory Overview
+
+```mermaid
+graph TD
+    A[ai-chatapp] --> B[chatapp/]
+    A --> C[.editorconfig]
+    A --> D[.gitignore]
+    A --> E[LICENSE]
+    A --> F[README.md]
+    
+    B --> G[src/]
+    B --> H[public/]
+    B --> I[firebase.ts]
+    B --> J[next.config.mjs]
+    B --> K[tailwind.config.ts]
+    B --> L[package.json]
+    B --> M[.env.example]
+    
+    G --> N[app/]
+    N --> O[api/]
+    N --> P[auth/]
+    N --> Q[components/]
+    N --> R[constants/]
+    N --> S[context/]
+    N --> T[globals.css]
+    N --> U[layout.tsx]
+    N --> V[page.tsx]
+    
+    O --> O1[claude/route.ts]
+    O --> O2[openai/route.ts]
+    
+    P --> P1[login/page.tsx]
+    P --> P2[register/page.tsx]
+    
+    Q --> Q1[Chat.tsx]
+    Q --> Q2[Sidebar.tsx]
+    Q --> Q3[Favorites.tsx]
+    Q --> Q4[ModelComparison.tsx]
+    
+    R --> R1[models.ts]
+    S --> S1[AppContext.tsx]
+    
+    H --> H1[next.svg]
+    H --> H2[vercel.svg]
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style G fill:#e8f5e8
+    style N fill:#fff3e0
+    style O fill:#ffebee
+    style P fill:#f1f8e9
+    style Q fill:#e3f2fd
+    style R fill:#fce4ec
+    style S fill:#f9fbe7
+```
+
+### 📂 Detailed Structure
+
 ```
 .
 ├── chatapp/                 # Main application directory
 │   ├── src/                # Source code
+│   │   ├── app/           # Next.js App Router
+│   │   │   ├── api/       # API routes
+│   │   │   │   ├── claude/route.ts    # Claude AI integration
+│   │   │   │   └── openai/route.ts    # OpenAI integration
+│   │   │   ├── auth/      # Authentication pages
+│   │   │   │   ├── login/page.tsx     # Login page
+│   │   │   │   └── register/page.tsx  # Registration page
+│   │   │   ├── components/ # React components
+│   │   │   │   ├── Chat.tsx           # Main chat interface
+│   │   │   │   ├── Sidebar.tsx        # Navigation sidebar
+│   │   │   │   ├── Favorites.tsx      # Favorites management
+│   │   │   │   └── ModelComparison.tsx # AI model comparison
+│   │   │   ├── constants/ # Application constants
+│   │   │   │   └── models.ts          # AI model definitions
+│   │   │   ├── context/   # React context providers
+│   │   │   │   └── AppContext.tsx     # Global app state
+│   │   │   ├── globals.css            # Global styles
+│   │   │   ├── layout.tsx             # Root layout
+│   │   │   └── page.tsx               # Home page
+│   │   └── favicon.ico    # App icon
 │   ├── public/             # Static files
-│   ├── .next/             # Next.js build output
+│   │   ├── next.svg       # Next.js logo
+│   │   └── vercel.svg     # Vercel logo
 │   ├── firebase.ts        # Firebase configuration
 │   ├── next.config.mjs    # Next.js configuration
 │   ├── tailwind.config.ts # Tailwind CSS configuration
@@ -46,7 +125,6 @@ Open [http://localhost:3000](http://localhost:3000) to start chatting!
 ├── .editorconfig          # Editor configuration
 ├── .gitignore            # Git ignore rules
 ├── LICENSE               # License file
-├── package.json          # Root package.json
 └── README.md            # This file
 ```
 
