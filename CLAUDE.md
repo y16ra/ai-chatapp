@@ -69,6 +69,63 @@ Required in `chatapp/.env.local`:
 
 ## Current Status
 
+### Latest Work Completed (2025/6/15) - Document Upload & QA System Implementation
+- **Feature**: 完全なドキュメントアップロード・QA機能を実装 (commit: TBD)
+  - **新機能**: PDF・Markdownファイルのアップロード・処理・質問応答システム
+  - **技術実装**: PostgreSQL + pgvector + OpenAI embeddings + pdf-parse
+  - **主要コンポーネント**:
+    - `src/app/api/documents/upload/route.ts` - ファイルアップロード・テキスト抽出・ベクトル化・DB保存
+    - `src/app/api/documents/qa/route.ts` - ベクトル検索による質問応答
+    - `src/app/api/documents/list/route.ts` - ルーム別ドキュメント一覧取得
+    - `src/app/api/documents/delete/route.ts` - ドキュメント削除（DB+物理ファイル）
+    - `src/app/components/DocumentUpload.tsx` - ドラッグ&ドロップアップロードUI
+    - `src/lib/db.ts` - PostgreSQL接続・ベクトル検索・CRUD操作
+  - **データベース**: PostgreSQL + pgvector extension
+    - `docs`テーブル: id, user_id, room_id, filename, content, chunk_text, embedding, etc.
+    - ベクトル類似度検索インデックス, ルーム別・ユーザー別インデックス
+  - **主な機能**:
+    - PDF/Markdownファイルのテキスト抽出
+    - テキストのチャンク分割（1000文字単位、200文字オーバーラップ）
+    - OpenAI text-embedding-3-small によるベクトル化
+    - ベクトル類似度検索による関連チャンク取得
+    - ストリーミング対応のQA回答生成
+    - ルーム別ドキュメント管理
+    - ファイル削除機能（ホバーUI・確認ダイアログ）
+
+- **UX改善**: チャット内統合ドキュメント機能
+  - 別画面→同一チャット内でのドキュメントQA実現
+  - ドキュメントモード切り替えトグル（Doc/Chat）
+  - アップロード済みファイル一覧表示（ヘッダー部分）
+  - ルーム変更時の自動リスト更新・モード無効化
+  - 削除時の確認ダイアログ・自動状態更新
+
+- **最新追加機能 (2025/6/15)**: ドキュメント選択機能
+  - **ファイル選択チェックボックス**: ドキュメントQAモード時に各ファイルにチェックボックスを表示
+  - **選択的検索**: チェックされたファイルのみを検索対象にして質問応答を実行
+  - **全選択/全解除**: ヘッダー部分に全選択・全解除ボタンを追加
+  - **視覚的フィードバック**: 選択されたファイルは青いリングで強調表示
+  - **選択状態表示**: 「X個選択中」「全て検索」などの状態表示
+  - **API拡張**: `searchDocuments`関数に`selectedFiles`パラメータを追加
+  - **状態管理**: `selectedDocuments` Set stateによる選択状態の管理
+  - **自動リセット**: ルーム変更・ドキュメント削除時の選択状態自動クリア
+
+- **ストレージ最適化 (2025/6/15)**: 物理ファイル保存を一時ファイル処理に変更
+  - **一時ファイル処理**: `uploads/`ディレクトリから`tmpdir()`（システム一時ディレクトリ）に変更
+  - **自動クリーンアップ**: try-finallyブロックで処理完了後に一時ファイルを自動削除
+  - **ストレージ効率化**: 物理ファイル永続保存を廃止、ディスク使用量大幅削減
+  - **セキュリティ向上**: 機密ファイルの永続化回避、漏洩リスク軽減
+  - **実装簡素化**: delete APIから物理ファイル削除処理を完全削除
+  - **技術実装**: 
+    - `tempFilePath = join(tmpdir(), 'temp_${userId}_${timestamp}_${filename}')`
+    - 処理フロー: アップロード→一時保存→解析→ベクトル化→DB保存→一時ファイル削除
+    - クロスプラットフォーム対応（macOS: /var/folders/, Linux: /tmp/, Windows: %TEMP%）
+
+- **技術的解決**: 
+  - pdf-parse初期化問題（テストファイル不足エラー）を解決
+  - APIルーティングの404エラーを段階的デバッグで解決
+  - ユーザー別→ルーム別管理への変更
+  - 物理ファイル・データベースの完全削除機能
+
 ### Latest Work Completed (2025/5/29)
 - **Feature**: Claude Web Search Tool統合 (commit: 415876c)
   - 新機能：Claude APIの`web_search_20250305` tool実装
@@ -142,6 +199,13 @@ Required in `chatapp/.env.local`:
 - ✅ **Web search機能（両プロバイダー対応完了）**
   - **Claude**: 全モデルでweb_search_20250305ツールを使用
   - **OpenAI**: GPT-4o/GPT-4o-miniでsearch-previewモデルを自動切り替え
+- ✅ **ドキュメントアップロード・QA機能（完全実装）**
+  - **ファイル対応**: PDF、Markdownファイルのアップロード
+  - **テキスト処理**: pdf-parseによる抽出、チャンク分割、ベクトル埋め込み
+  - **検索**: PostgreSQL + pgvectorによるベクトル類似度検索
+  - **QA**: ストリーミング対応の質問応答、参照元表示
+  - **管理**: ルーム別管理、削除機能、チャット内統合UI
+  - **NEW**: ファイル選択機能（チェックボックスによる選択的検索）
 
 ## Next Actions
 
@@ -150,8 +214,13 @@ Required in `chatapp/.env.local`:
    - Claude APIのweb_search_20250305 tool統合
    - UI: Claudeモデル限定チェックボックス
    - ストリーミング対応とmax_tokens最適化
+
+2. **ドキュメントアップロード・QA機能** ✅ **完了 (2025/6/15)**
+   - PostgreSQL + pgvector + OpenAI embeddings統合
+   - PDF/Markdownファイル対応、ベクトル検索
+   - チャット内統合UI、ルーム別管理、削除機能
    
-2. **AIモデル更新** ✅ **部分完了 (2025/5/29)**
+3. **AIモデル更新** ✅ **部分完了 (2025/5/29)**
    
    **実装済みモデル:**
    | Provider | 実装済み | 状況 |
@@ -164,16 +233,19 @@ Required in `chatapp/.env.local`:
    - レガシーモデルの段階的廃止
    - 新モデルの性能・コスト特性の最適化
    
-3. **コードブロック シンタックスハイライト** - コード表示の改善
-4. **メッセージ検索機能** - 過去の会話を効率的に検索
-5. **メッセージ編集機能** - 送信済みメッセージの修正
-6. **ダークモード切り替え** - UI/UX改善
+4. **コードブロック シンタックスハイライト** - コード表示の改善
+5. **メッセージ検索機能** - 過去の会話を効率的に検索
+6. **メッセージ編集機能** - 送信済みメッセージの修正
+7. **ダークモード切り替え** - UI/UX改善
 
 ### 中長期的な機能拡張
-- ファイルアップロード対応
-- 画像解析機能
+- 画像解析機能（画像ファイルアップロード対応）
 - 会話エクスポート機能
 - システムプロンプト設定
+- ドキュメント機能拡張：
+  - 複数ファイル形式対応（Word、PowerPoint、Excel等）
+  - OCR機能（画像・スキャンPDF対応）
+  - ドキュメント間の関連性分析
 
 ### 技術的考慮事項
 - **Web検索機能の運用**:

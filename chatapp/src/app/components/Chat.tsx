@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { GoPaperAirplane } from "react-icons/go";
 import { FaCheck, FaCheckDouble, FaRedo, FaHeart, FaRegHeart } from "react-icons/fa";
-import { HiChatBubbleLeft, HiCog6Tooth, HiGlobeAlt, HiTrash, HiChartBarSquare } from "react-icons/hi2";
+import { HiChatBubbleLeft, HiCog6Tooth, HiGlobeAlt, HiTrash, HiChartBarSquare, HiDocumentText, HiXMark } from "react-icons/hi2";
 import { db } from "../../../firebase";
 import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, getDocs, deleteDoc, updateDoc } from "firebase/firestore";
 import { useAppContext } from "@/context/AppContext";
 import LoadingIcons from 'react-loading-icons';
 import ModelComparison, { ComparisonResult } from './ModelComparison';
+import DocumentUpload from './DocumentUpload';
+import DocumentQA from './DocumentQA';
 import { AI_MODELS, DEFAULT_COMPARISON_MODELS, getModelProvider, isClaudeModel, supportsWebSearch } from '@/constants/models';
 
 type Message = {
@@ -34,6 +36,26 @@ const Chat = () => {
   const [comparisonResults, setComparisonResults] = useState<ComparisonResult[]>([]);
   const [comparisonQuestion, setComparisonQuestion] = useState<string>("");
   const [enableWebSearch, setEnableWebSearch] = useState<boolean>(false);
+  const [document, setDocument] = useState<File | null>(null);
+  const [showDocumentUpload, setShowDocumentUpload] = useState<boolean>(false);
+  const [showDocumentQA, setShowDocumentQA] = useState<boolean>(false);
+  const [qaAnswer, setQaAnswer] = useState<string>("");
+  const [qaSources, setQaSources] = useState<Array<{
+    filename: string;
+    pageNumber?: number;
+    similarity: number;
+    preview: string;
+  }>>([]);
+  const [qaLoading, setQaLoading] = useState<boolean>(false);
+  const [uploadedDocuments, setUploadedDocuments] = useState<Array<{
+    filename: string;
+    uploadedAt: string;
+    fileSize?: number;
+    pageCount?: number;
+    chunkCount?: number;
+  }>>([]);
+  const [documentMode, setDocumentMode] = useState<boolean>(false);
+  const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
 
   const scrollDiv = useRef<HTMLDivElement>(null);
 
@@ -122,6 +144,105 @@ const Chat = () => {
   const startComposition = () => setComposition(true);
   const endComposition = () => setComposition(false);
 
+  // アップロード済みドキュメントを取得する関数
+  const fetchUploadedDocuments = useCallback(async () => {
+    if (!userId || !selectedRoom) return;
+    
+    try {
+      const response = await fetch('/api/documents/list', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, roomId: selectedRoom }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUploadedDocuments(data.documents || []);
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    }
+  }, [userId, selectedRoom]);
+
+  // ドキュメント削除関数
+  const deleteDocument = useCallback(async (filename: string) => {
+    if (!userId || !selectedRoom) return;
+    
+    try {
+      const response = await fetch('/api/documents/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, roomId: selectedRoom, filename }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Document deleted:', data);
+        fetchUploadedDocuments(); // ドキュメント一覧を更新
+        
+        // ドキュメントが0個になったらドキュメントモードを無効化
+        const updatedDocs = uploadedDocuments.filter(doc => doc.filename !== filename);
+        if (updatedDocs.length === 0) {
+          setDocumentMode(false);
+          setSelectedDocuments(new Set());
+        }
+        
+        // 削除されたファイルが選択されていた場合は選択から除外
+        setSelectedDocuments(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(filename);
+          return newSet;
+        });
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to delete document:', errorData);
+        // TODO: エラー通知を表示
+      }
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      // TODO: エラー通知を表示
+    }
+  }, [userId, selectedRoom, fetchUploadedDocuments, uploadedDocuments]);
+
+  // 初回ロード時・ルーム変更時にドキュメント一覧を取得
+  useEffect(() => {
+    if (userId && selectedRoom) {
+      fetchUploadedDocuments();
+      // ルーム変更時はドキュメントモードを無効化
+      setDocumentMode(false);
+      // 選択状態もリセット
+      setSelectedDocuments(new Set());
+    }
+  }, [userId, selectedRoom, fetchUploadedDocuments]);
+
+  // ドキュメント選択の処理
+  const toggleDocumentSelection = (filename: string) => {
+    setSelectedDocuments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(filename)) {
+        newSet.delete(filename);
+      } else {
+        newSet.add(filename);
+      }
+      return newSet;
+    });
+  };
+
+  // 全選択/全解除の処理
+  const toggleAllDocuments = () => {
+    if (selectedDocuments.size === uploadedDocuments.length) {
+      // 全選択されている場合は全解除
+      setSelectedDocuments(new Set());
+    } else {
+      // そうでなければ全選択
+      setSelectedDocuments(new Set(uploadedDocuments.map(doc => doc.filename)));
+    }
+  };
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSendMessage = async () => {
@@ -150,6 +271,90 @@ const Chat = () => {
     setIsLoading(true);
     setStreamingMessage("");
 
+    // ドキュメントモードの場合はQA APIを使用
+    if (documentMode && uploadedDocuments.length > 0) {
+      try {
+        const selectedFiles = selectedDocuments.size > 0 ? Array.from(selectedDocuments) : undefined;
+        const response = await fetch('/api/documents/qa', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            question: currentInput,
+            userId: userId,
+            roomId: selectedRoom,
+            selectedFiles: selectedFiles,
+          }),
+        });
+
+        if (!response.body) {
+          throw new Error('No response body');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullResponse = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.type === 'content') {
+                  fullResponse += parsed.content;
+                  setStreamingMessage(fullResponse);
+                } else if (parsed.type === 'sources') {
+                  // 参照元情報を表示用に保存
+                  const sourcesText = parsed.sources.map((source: any, index: number) => 
+                    `\n\n**参照 ${index + 1}:** ${source.filename}${source.pageNumber ? ` (ページ ${source.pageNumber})` : ''} (類似度: ${Math.round(source.similarity * 100)}%)\n${source.preview}`
+                  ).join('');
+                  fullResponse += sourcesText;
+                  setStreamingMessage(fullResponse);
+                }
+              } catch (e) {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+
+        // Store final response
+        const botMessageData = {
+          text: fullResponse,
+          sender: "bot",
+          createdAt: serverTimestamp(),
+          isRead: false,
+        };
+        await addDoc(collection(doc(db, "rooms", selectedRoom!), "messages"), botMessageData);
+
+      } catch (error) {
+        console.error('Document QA error:', error);
+        const errorMessage = "ドキュメントQAでエラーが発生しました。";
+        const botMessageData = {
+          text: errorMessage,
+          sender: "bot",
+          createdAt: serverTimestamp(),
+          isRead: false,
+        };
+        await addDoc(collection(doc(db, "rooms", selectedRoom!), "messages"), botMessageData);
+      }
+
+      setIsLoading(false);
+      setStreamingMessage("");
+      return;
+    }
+
+    // 通常のチャット処理
     // Determine which API endpoint to use based on the selected model
     const apiEndpoint = isClaudeModel(selectedModel) ? '/api/claude' : '/api/openai';
 
@@ -434,7 +639,8 @@ const Chat = () => {
               text: message.text,
               sender: message.sender
             })),
-            model: model
+            model: model,
+            enableWebSearch: supportsWebSearch(model) ? enableWebSearch : false
           }),
         });
 
@@ -519,6 +725,71 @@ const Chat = () => {
       alert("チャット履歴のクリアに失敗しました。再度お試しください。");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // QA機能のハンドラー
+  const handleQuestionSubmit = async (question: string) => {
+    if (!userId) return;
+    
+    setQaLoading(true);
+    setQaAnswer("");
+    setQaSources([]);
+
+    try {
+      const response = await fetch('/api/documents/qa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question,
+          userId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`QA request failed: ${response.statusText}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                
+                if (data.type === 'content') {
+                  setQaAnswer(prev => prev + data.content);
+                } else if (data.type === 'sources') {
+                  setQaSources(data.sources.map((source: any) => ({
+                    filename: source.filename,
+                    pageNumber: source.pageNumber,
+                    similarity: source.similarity,
+                    preview: source.preview
+                  })));
+                }
+              } catch (e) {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('QA error:', error);
+      setQaAnswer('エラーが発生しました。もう一度お試しください。');
+    } finally {
+      setQaLoading(false);
     }
   };
 
@@ -784,8 +1055,114 @@ const Chat = () => {
                   <span className="text-xs text-slate-500">—</span>
                 )}
               </div>
+              {/* Document Upload Button */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setShowDocumentUpload(true)}
+                  className="flex items-center space-x-1 text-slate-400 hover:text-slate-300 transition-colors"
+                  title="ドキュメントアップロード"
+                >
+                  <HiDocumentText className="w-3 h-3" />
+                  <span className="text-xs hidden sm:inline">Upload</span>
+                </button>
+              </div>
+
+              {/* Document Mode Toggle */}
+              {uploadedDocuments.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  <HiDocumentText className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                  <label className="flex items-center cursor-pointer">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={documentMode}
+                        onChange={(e) => setDocumentMode(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`w-6 h-3 rounded-full transition-colors ${documentMode ? 'bg-green-500' : 'bg-slate-500'}`}></div>
+                      <div className={`absolute left-0.5 top-0.5 w-2 h-2 bg-white rounded-full transition-transform ${documentMode ? 'translate-x-3' : 'translate-x-0'}`}></div>
+                    </div>
+                    <span className="ml-1 text-xs text-slate-300 hidden sm:inline">
+                      {documentMode ? 'Doc' : 'Chat'}
+                    </span>
+                  </label>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Uploaded Documents Display */}
+          {uploadedDocuments.length > 0 && (
+            <div className="mt-3 bg-slate-700/30 backdrop-blur-sm rounded-lg p-2 border border-slate-600/30">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-medium text-slate-300 flex items-center space-x-1">
+                  <HiDocumentText className="w-3 h-3" />
+                  <span>アップロード済みドキュメント ({uploadedDocuments.length})</span>
+                </h3>
+                <div className="flex items-center space-x-2">
+                  {documentMode && (
+                    <>
+                      <button
+                        onClick={toggleAllDocuments}
+                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                        title={selectedDocuments.size === uploadedDocuments.length ? "全解除" : "全選択"}
+                      >
+                        {selectedDocuments.size === uploadedDocuments.length ? "全解除" : "全選択"}
+                      </button>
+                      <span className="text-xs text-slate-400">|
+                      </span>
+                      <span className="text-xs text-blue-400">
+                        {selectedDocuments.size > 0 ? `${selectedDocuments.size}個選択中` : "全て検索"}
+                      </span>
+                    </>
+                  )}
+                  {documentMode && (
+                    <span className="text-xs text-green-400 bg-green-500/20 px-2 py-0.5 rounded-full">
+                      ドキュメントQAモード
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {uploadedDocuments.map((doc, index) => (
+                  <div
+                    key={index}
+                    className={`bg-slate-600/50 text-slate-300 px-2 py-1 rounded text-xs flex items-center space-x-1 max-w-xs group transition-colors ${
+                      documentMode && selectedDocuments.has(doc.filename) 
+                        ? 'ring-2 ring-blue-400 bg-blue-500/20' 
+                        : ''
+                    }`}
+                  >
+                    {documentMode && (
+                      <input
+                        type="checkbox"
+                        checked={selectedDocuments.has(doc.filename)}
+                        onChange={() => toggleDocumentSelection(doc.filename)}
+                        className="w-3 h-3 rounded border-slate-400 text-blue-500 focus:ring-blue-500 focus:ring-1"
+                        title="検索対象に含める/除外する"
+                      />
+                    )}
+                    <HiDocumentText className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{doc.filename}</span>
+                    {doc.chunkCount && (
+                      <span className="text-slate-400">({doc.chunkCount}chunks)</span>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`「${doc.filename}」を削除しますか？この操作は取り消せません。`)) {
+                          deleteDocument(doc.filename);
+                        }
+                      }}
+                      className="ml-1 text-slate-400 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                      title="ドキュメントを削除"
+                    >
+                      <HiXMark className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
@@ -795,6 +1172,24 @@ const Chat = () => {
         question={comparisonQuestion}
         results={comparisonResults}
         onRegenerate={handleComparisonRegenerate}
+      />
+
+      <DocumentUpload
+        isOpen={showDocumentUpload}
+        onClose={() => setShowDocumentUpload(false)}
+        onUploadComplete={(filename: string) => {
+          console.log(`Document uploaded: ${filename}`);
+          fetchUploadedDocuments(); // ドキュメント一覧を更新
+        }}
+      />
+
+      <DocumentQA
+        isOpen={showDocumentQA}
+        onClose={() => setShowDocumentQA(false)}
+        onQuestionSubmit={handleQuestionSubmit}
+        isLoading={qaLoading}
+        answer={qaAnswer}
+        sources={qaSources}
       />
     </div>
 
