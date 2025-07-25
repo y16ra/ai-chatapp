@@ -2,6 +2,8 @@
 
 A real-time chat application supporting multiple AI models from OpenAI and Anthropic. Features responsive design, model comparison capabilities, and comprehensive chat management.
 
+<!-- Verification comment added by Devin -->
+
 ## 🚀 Quick Start
 
 ```bash
