@@ -814,7 +814,7 @@ const Chat = () => {
           </div>
 
           {/* Compact Control Panel */}
-          <div className="glass-morphism rounded-xl p-2 border border-white/10">
+          <div className="glass-morphism rounded-xl p-2">
             <div className="flex items-center justify-between">
               {/* Action Buttons */}
               <div className="flex items-center space-x-2">
@@ -1008,7 +1008,7 @@ const Chat = () => {
 
         {/* Compact Model Selection & Controls */}
         <div className="px-2 sm:px-4 pb-1">
-          <div className="glass-morphism rounded-xl p-2 border border-white/10">
+          <div className="glass-morphism rounded-xl p-2">
             <div className="flex items-center justify-between space-x-3">
               {/* Model Selection */}
               <div className="flex items-center space-x-2 flex-1">
@@ -1093,7 +1093,7 @@ const Chat = () => {
 
           {/* Uploaded Documents Display */}
           {uploadedDocuments.length > 0 && (
-            <div className="mt-3 glass-morphism rounded-xl p-2 border border-white/10">
+            <div className="mt-3 glass-morphism rounded-xl p-2">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-medium text-white flex items-center space-x-1">
                   <HiDocumentText className="w-3 h-3" />

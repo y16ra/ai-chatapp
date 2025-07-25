@@ -34,6 +34,7 @@ const config: Config = {
       },
       backdropBlur: {
         xs: '2px',
+        glass: '10px',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',
