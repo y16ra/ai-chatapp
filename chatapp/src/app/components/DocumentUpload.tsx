@@ -128,11 +128,11 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
     switch (status) {
       case 'uploading':
       case 'processing':
-        return <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>;
+        return <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-400"></div>;
       case 'completed':
-        return <div className="text-green-600">✓</div>;
+        return <div className="text-green-400">✓</div>;
       case 'error':
-        return <div className="text-red-600">✗</div>;
+        return <div className="text-red-400">✗</div>;
     }
   };
 
@@ -152,40 +152,40 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+      <div className="glass-morphism rounded-2xl p-6 w-full max-w-md mx-4 shadow-glass animate-slide-up">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-white">
             ドキュメントアップロード
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="glass-button text-white/70 hover:text-white p-2 rounded-xl transition-all"
           >
             <HiXMark className="h-6 w-6" />
           </button>
         </div>
 
         <div
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
             isDragOver
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-gray-300 dark:border-gray-600'
+              ? 'border-primary-400 bg-primary-500/20 scale-105'
+              : 'border-white/30 hover:border-white/50'
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <HiCloudArrowUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <p className="text-gray-600 dark:text-gray-300 mb-2">
+          <HiCloudArrowUp className="mx-auto h-12 w-12 text-white/70 mb-4" />
+          <p className="text-white mb-2">
             ファイルをドラッグ&ドロップ
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          <p className="text-sm text-white/70 mb-4">
             または
           </p>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+            className="glass-button text-white px-4 py-2 rounded-xl hover:scale-105 transition-transform"
           >
             ファイルを選択
           </button>
@@ -197,41 +197,41 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
             onChange={handleFileInputChange}
             className="hidden"
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          <p className="text-xs text-white/50 mt-2">
             対応形式: PDF, Markdown (.md)
           </p>
         </div>
 
         {uploads.length > 0 && (
           <div className="mt-4 space-y-2">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+            <h3 className="text-sm font-medium text-white">
               アップロード状況
             </h3>
             {uploads.map((upload, index) => (
-              <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+              <div key={index} className="bg-white/5 rounded-xl p-3 border border-white/10">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
-                    <HiDocumentText className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-900 dark:text-white truncate">
+                    <HiDocumentText className="h-4 w-4 text-white/70" />
+                    <span className="text-sm text-white truncate">
                       {upload.filename}
                     </span>
                   </div>
                   {getStatusIcon(upload.status)}
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mr-2">
+                  <div className="flex-1 bg-white/10 rounded-full h-2 mr-2">
                     <div
                       className={`h-2 rounded-full transition-all duration-300 ${
                         upload.status === 'error' 
-                          ? 'bg-red-500' 
+                          ? 'bg-red-400' 
                           : upload.status === 'completed'
-                          ? 'bg-green-500'
-                          : 'bg-blue-500'
+                          ? 'bg-green-400'
+                          : 'bg-primary-400'
                       }`}
                       style={{ width: `${upload.progress}%` }}
                     ></div>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-white/70">
                     {getStatusText(upload)}
                   </span>
                 </div>

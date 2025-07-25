@@ -814,14 +814,14 @@ const Chat = () => {
           </div>
 
           {/* Compact Control Panel */}
-          <div className="bg-slate-700/50 backdrop-blur-sm rounded-lg p-2 border border-slate-600/50">
+          <div className="glass-morphism rounded-xl p-2">
             <div className="flex items-center justify-between">
               {/* Action Buttons */}
               <div className="flex items-center space-x-2">
                 <button
                   onClick={clearChatHistory}
                   disabled={!selectedRoom || messages.length === 0}
-                  className="bg-red-500/20 hover:bg-red-500/30 disabled:hover:bg-red-500/20 text-red-300 disabled:text-red-400 px-2 py-1 rounded transition-colors text-xs flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="glass-button bg-red-500/20 hover:bg-red-500/30 disabled:hover:bg-red-500/20 text-red-300 disabled:text-red-400 px-2 py-1 rounded-xl transition-all text-xs flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 disabled:hover:scale-100"
                   title="Clear chat history"
                 >
                   <HiTrash className="w-3 h-3" />
@@ -834,7 +834,7 @@ const Chat = () => {
                     }
                   }}
                   disabled={!inputMessage.trim() || isLoading}
-                  className="bg-purple-500/20 hover:bg-purple-500/30 disabled:hover:bg-purple-500/20 text-purple-300 disabled:text-purple-400 px-2 py-1 rounded transition-colors text-xs flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="glass-button bg-purple-500/20 hover:bg-purple-500/30 disabled:hover:bg-purple-500/20 text-purple-300 disabled:text-purple-400 px-2 py-1 rounded-xl transition-all text-xs flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 disabled:hover:scale-100"
                   title="Compare models"
                 >
                   <HiChartBarSquare className="w-3 h-3" />
@@ -844,10 +844,10 @@ const Chat = () => {
 
               {/* Status Info */}
               <div className="flex items-center space-x-3 text-xs">
-                <div className="text-slate-400">
+                <div className="text-white/60">
                   {messages.length} messages
                 </div>
-                <div className={`px-2 py-0.5 rounded text-xs ${isLoading ? 'bg-yellow-500/20 text-yellow-300' : 'bg-green-500/20 text-green-300'}`}>
+                <div className={`px-2 py-0.5 rounded-xl text-xs ${isLoading ? 'bg-yellow-500/20 text-yellow-300' : 'bg-green-500/20 text-green-300'}`}>
                   {isLoading ? "Generating..." : "Ready"}
                 </div>
               </div>
@@ -861,24 +861,24 @@ const Chat = () => {
           {messages.map((message, index) => (
             <div
               key={index}
-              className={message.sender === "user" ? "text-right" : "text-left"}>
+              className={`${message.sender === "user" ? "text-right" : "text-left"} animate-fade-in`}>
                 <div
                   className={
                     message.sender === "user"
-                    ? "bg-blue-500 inline-block rounded px-3 sm:px-4 py-2 mb-2 whitespace-pre-wrap max-w-[280px] sm:max-w-xs md:max-w-md lg:max-w-lg"
-                    : "bg-green-500 inline-block rounded px-3 sm:px-4 py-2 mb-2 whitespace-pre-wrap max-w-[280px] sm:max-w-xs md:max-w-md lg:max-w-lg"
+                    ? "bg-gradient-to-r from-primary-500/80 to-blue-500/80 inline-block rounded-xl px-3 sm:px-4 py-2 mb-2 whitespace-pre-wrap max-w-[280px] sm:max-w-xs md:max-w-md lg:max-w-lg backdrop-blur-sm"
+                    : "glass-morphism inline-block rounded-xl px-3 sm:px-4 py-2 mb-2 whitespace-pre-wrap max-w-[280px] sm:max-w-xs md:max-w-md lg:max-w-lg"
                       }
                 >
                 <p className="text-white">{message.text}</p>
                 <div className={`text-xs mt-1 flex items-center justify-between ${
-                  message.sender === "user" ? "text-blue-200" : "text-green-200"
+                  message.sender === "user" ? "text-white/80" : "text-white/80"
                 }`}>
                   <span>{formatTimestamp(message.createdAt)}</span>
                   <div className="flex items-center gap-2">
                     {message.sender === "bot" && (
                       <button
                         onClick={() => toggleFavorite((message as any).id, message.text)}
-                        className="hover:bg-green-600 p-1 rounded transition-colors"
+                        className="hover:bg-white/20 p-1 rounded-xl transition-all hover:scale-110"
                         title={favorites.has((message as any).id) ? "お気に入りから削除" : "お気に入りに追加"}
                       >
                         {favorites.has((message as any).id) ? (
@@ -914,7 +914,7 @@ const Chat = () => {
                       <button
                         onClick={() => regenerateResponse(index)}
                         disabled={regeneratingMessageId === (message as any).id || isLoading}
-                        className="hover:bg-green-600 p-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="hover:bg-white/20 p-1 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
                         title="回答を再生成"
                       >
                         <FaRedo className="text-xs" />
@@ -935,11 +935,11 @@ const Chat = () => {
             </div>
           ))}
           {streamingMessage && (
-            <div className="text-left">
-              <div className="bg-green-500 inline-block rounded px-3 sm:px-4 py-2 mb-2 whitespace-pre-wrap max-w-[280px] sm:max-w-xs md:max-w-md lg:max-w-lg">
+            <div className="text-left animate-fade-in">
+              <div className="glass-morphism inline-block rounded-xl px-3 sm:px-4 py-2 mb-2 whitespace-pre-wrap max-w-[280px] sm:max-w-xs md:max-w-md lg:max-w-lg">
                 <p className="text-white">{streamingMessage}</p>
-                <span className="text-green-200 animate-pulse">▋</span>
-                <div className="text-xs mt-1 flex items-center justify-between text-green-200">
+                <span className="text-white/80 animate-pulse">▋</span>
+                <div className="text-xs mt-1 flex items-center justify-between text-white/80">
                   <span>
                     {new Date().toLocaleTimeString('ja-JP', {
                       hour: '2-digit',
@@ -957,13 +957,13 @@ const Chat = () => {
       </div>
       
       {/* 固定入力エリア */}
-      <div className="flex-none bg-gradient-to-r from-slate-800 to-slate-700 border-t border-slate-600">
+      <div className="flex-none glass-morphism border-t border-white/10 shadow-glass">
         {/* Message Input */}
         <div className="p-2 sm:p-4">
           <div className="relative">
             <textarea
               ref={textareaRef}
-              className="w-full p-2 sm:p-3 pr-12 sm:pr-14 rounded-lg border-2 border-slate-600 bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none overflow-hidden min-h-[40px] text-sm sm:text-base"
+              className="w-full p-2 sm:p-3 pr-12 sm:pr-14 rounded-xl border-2 border-white/30 glass-button text-white placeholder-white/50 focus:outline-none focus:border-primary-400 resize-none overflow-hidden min-h-[40px] text-sm sm:text-base"
               placeholder="Type a message..."
               value={inputMessage}
               onCompositionStart={startComposition}
@@ -997,22 +997,22 @@ const Chat = () => {
               rows={1}
             />
             <button
-              className="absolute right-2 sm:right-3 top-2 sm:top-3 rounded p-1 hover:bg-slate-600 text-white"
+              className="absolute right-2 sm:right-3 top-2 sm:top-3 rounded-xl p-1 glass-button text-white hover:scale-110 transition-transform"
               onClick={handleSendMessage}
             >
               <GoPaperAirplane className="text-sm sm:text-base" />
             </button>
-            <span className="absolute right-2 sm:right-3 bottom-1 text-xs text-slate-400 italic">⌘+Enter to send</span>
+            <span className="absolute right-2 sm:right-3 bottom-1 text-xs text-white/50 italic">⌘+Enter to send</span>
           </div>
         </div>
 
         {/* Compact Model Selection & Controls */}
         <div className="px-2 sm:px-4 pb-1">
-          <div className="bg-slate-700/50 backdrop-blur-sm rounded-lg p-2 border border-slate-600/50">
+          <div className="glass-morphism rounded-xl p-2">
             <div className="flex items-center justify-between space-x-3">
               {/* Model Selection */}
               <div className="flex items-center space-x-2 flex-1">
-                <HiCog6Tooth className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                <HiCog6Tooth className="w-3 h-3 text-white/60 flex-shrink-0" />
                 <select
                   value={selectedModel}
                   onChange={(e) => {
@@ -1022,10 +1022,10 @@ const Chat = () => {
                       setEnableWebSearch(false);
                     }
                   }}
-                  className="flex-1 bg-slate-600 hover:bg-slate-500 text-white rounded px-2 py-1 border-0 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-xs appearance-none cursor-pointer"
+                  className="flex-1 glass-button text-white rounded-xl px-2 py-1 border-0 focus:outline-none focus:ring-2 focus:ring-primary-400 transition-all text-xs appearance-none cursor-pointer"
                 >
                   {AI_MODELS.map((model) => (
-                    <option key={model.value} value={model.value}>
+                    <option key={model.value} value={model.value} className="bg-slate-800 text-white">
                       {model.label}
                     </option>
                   ))}
@@ -1034,7 +1034,7 @@ const Chat = () => {
 
               {/* Web Search Toggle */}
               <div className="flex items-center space-x-2">
-                <HiGlobeAlt className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                <HiGlobeAlt className="w-3 h-3 text-white/60 flex-shrink-0" />
                 {supportsWebSearch(selectedModel) ? (
                   <label className="flex items-center cursor-pointer">
                     <div className="relative">
@@ -1044,22 +1044,22 @@ const Chat = () => {
                         onChange={(e) => setEnableWebSearch(e.target.checked)}
                         className="sr-only"
                       />
-                      <div className={`w-6 h-3 rounded-full transition-colors ${enableWebSearch ? 'bg-blue-500' : 'bg-slate-500'}`}></div>
+                      <div className={`w-6 h-3 rounded-full transition-colors ${enableWebSearch ? 'bg-primary-500' : 'bg-white/20'}`}></div>
                       <div className={`absolute left-0.5 top-0.5 w-2 h-2 bg-white rounded-full transition-transform ${enableWebSearch ? 'translate-x-3' : 'translate-x-0'}`}></div>
                     </div>
-                    <span className="ml-1 text-xs text-slate-300 hidden sm:inline">
+                    <span className="ml-1 text-xs text-white/80 hidden sm:inline">
                       {enableWebSearch ? 'Web' : 'Off'}
                     </span>
                   </label>
                 ) : (
-                  <span className="text-xs text-slate-500">—</span>
+                  <span className="text-xs text-white/40">—</span>
                 )}
               </div>
               {/* Document Upload Button */}
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setShowDocumentUpload(true)}
-                  className="flex items-center space-x-1 text-slate-400 hover:text-slate-300 transition-colors"
+                  className="flex items-center space-x-1 text-white/60 hover:text-white transition-all hover:scale-110"
                   title="ドキュメントアップロード"
                 >
                   <HiDocumentText className="w-3 h-3" />
@@ -1070,7 +1070,7 @@ const Chat = () => {
               {/* Document Mode Toggle */}
               {uploadedDocuments.length > 0 && (
                 <div className="flex items-center space-x-2">
-                  <HiDocumentText className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                  <HiDocumentText className="w-3 h-3 text-white/60 flex-shrink-0" />
                   <label className="flex items-center cursor-pointer">
                     <div className="relative">
                       <input
@@ -1079,10 +1079,10 @@ const Chat = () => {
                         onChange={(e) => setDocumentMode(e.target.checked)}
                         className="sr-only"
                       />
-                      <div className={`w-6 h-3 rounded-full transition-colors ${documentMode ? 'bg-green-500' : 'bg-slate-500'}`}></div>
+                      <div className={`w-6 h-3 rounded-full transition-colors ${documentMode ? 'bg-green-500' : 'bg-white/20'}`}></div>
                       <div className={`absolute left-0.5 top-0.5 w-2 h-2 bg-white rounded-full transition-transform ${documentMode ? 'translate-x-3' : 'translate-x-0'}`}></div>
                     </div>
-                    <span className="ml-1 text-xs text-slate-300 hidden sm:inline">
+                    <span className="ml-1 text-xs text-white/80 hidden sm:inline">
                       {documentMode ? 'Doc' : 'Chat'}
                     </span>
                   </label>
@@ -1093,9 +1093,9 @@ const Chat = () => {
 
           {/* Uploaded Documents Display */}
           {uploadedDocuments.length > 0 && (
-            <div className="mt-3 bg-slate-700/30 backdrop-blur-sm rounded-lg p-2 border border-slate-600/30">
+            <div className="mt-3 glass-morphism rounded-xl p-2">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-medium text-slate-300 flex items-center space-x-1">
+                <h3 className="text-xs font-medium text-white flex items-center space-x-1">
                   <HiDocumentText className="w-3 h-3" />
                   <span>アップロード済みドキュメント ({uploadedDocuments.length})</span>
                 </h3>
@@ -1104,14 +1104,14 @@ const Chat = () => {
                     <>
                       <button
                         onClick={toggleAllDocuments}
-                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                        className="text-xs text-primary-400 hover:text-primary-300 transition-colors"
                         title={selectedDocuments.size === uploadedDocuments.length ? "全解除" : "全選択"}
                       >
                         {selectedDocuments.size === uploadedDocuments.length ? "全解除" : "全選択"}
                       </button>
-                      <span className="text-xs text-slate-400">|
+                      <span className="text-xs text-white/40">|
                       </span>
-                      <span className="text-xs text-blue-400">
+                      <span className="text-xs text-primary-400">
                         {selectedDocuments.size > 0 ? `${selectedDocuments.size}個選択中` : "全て検索"}
                       </span>
                     </>
@@ -1127,9 +1127,9 @@ const Chat = () => {
                 {uploadedDocuments.map((doc, index) => (
                   <div
                     key={index}
-                    className={`bg-slate-600/50 text-slate-300 px-2 py-1 rounded text-xs flex items-center space-x-1 max-w-xs group transition-colors ${
+                    className={`glass-button text-white px-2 py-1 rounded-xl text-xs flex items-center space-x-1 max-w-xs group transition-all ${
                       documentMode && selectedDocuments.has(doc.filename) 
-                        ? 'ring-2 ring-blue-400 bg-blue-500/20' 
+                        ? 'ring-2 ring-primary-400 bg-primary-500/20' 
                         : ''
                     }`}
                   >
@@ -1138,14 +1138,14 @@ const Chat = () => {
                         type="checkbox"
                         checked={selectedDocuments.has(doc.filename)}
                         onChange={() => toggleDocumentSelection(doc.filename)}
-                        className="w-3 h-3 rounded border-slate-400 text-blue-500 focus:ring-blue-500 focus:ring-1"
+                        className="w-3 h-3 rounded border-white/30 text-primary-500 focus:ring-primary-500 focus:ring-1"
                         title="検索対象に含める/除外する"
                       />
                     )}
                     <HiDocumentText className="w-3 h-3 flex-shrink-0" />
                     <span className="truncate">{doc.filename}</span>
                     {doc.chunkCount && (
-                      <span className="text-slate-400">({doc.chunkCount}chunks)</span>
+                      <span className="text-white/60">({doc.chunkCount}chunks)</span>
                     )}
                     <button
                       onClick={() => {
@@ -1153,7 +1153,7 @@ const Chat = () => {
                           deleteDocument(doc.filename);
                         }
                       }}
-                      className="ml-1 text-slate-400 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                      className="ml-1 text-white/60 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
                       title="ドキュメントを削除"
                     >
                       <HiXMark className="w-3 h-3" />

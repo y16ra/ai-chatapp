@@ -49,19 +49,19 @@ const DocumentQA: React.FC<DocumentQAProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl mx-4 h-[80vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+      <div className="glass-morphism rounded-2xl w-full max-w-4xl mx-4 h-[80vh] flex flex-col shadow-glass animate-slide-up">
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center p-6 border-b border-white/10">
           <div className="flex items-center space-x-2">
-            <HiDocumentText className="h-5 w-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <HiDocumentText className="h-5 w-5 text-primary-400" />
+            <h2 className="text-lg font-semibold text-white">
               ドキュメント Q&A
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="glass-button text-white/70 hover:text-white p-2 rounded-xl transition-all"
           >
             <HiXMark className="h-6 w-6" />
           </button>
@@ -74,16 +74,16 @@ const DocumentQA: React.FC<DocumentQAProps> = ({
             {/* Answer Display */}
             <div className="flex-1 p-4 overflow-y-auto">
               {answer ? (
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                <div className="glass-morphism rounded-xl p-4 border border-white/10">
+                  <h3 className="text-sm font-medium text-white mb-2">
                     回答
                   </h3>
-                  <div className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                  <div className="text-white/90 whitespace-pre-wrap">
                     {answer}
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-center h-full text-white/60">
                   <div className="text-center">
                     <HiMagnifyingGlass className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>アップロードしたドキュメントについて質問してください</p>
@@ -93,8 +93,8 @@ const DocumentQA: React.FC<DocumentQAProps> = ({
               
               {isLoading && (
                 <div className="flex items-center space-x-2 mt-4">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-400"></div>
+                  <span className="text-sm text-white/70">
                     回答を生成中...
                   </span>
                 </div>
@@ -102,7 +102,7 @@ const DocumentQA: React.FC<DocumentQAProps> = ({
             </div>
 
             {/* Question Input */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="p-4 border-t border-white/10">
               <form onSubmit={handleSubmit} className="relative">
                 <textarea
                   ref={textareaRef}
@@ -110,19 +110,19 @@ const DocumentQA: React.FC<DocumentQAProps> = ({
                   onChange={(e) => setQuestion(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="ドキュメントについて質問を入力してください..."
-                  className="w-full p-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full p-3 pr-12 glass-button text-white placeholder-white/50 border-white/30 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-400"
                   rows={3}
                   disabled={isLoading}
                 />
                 <button
                   type="submit"
                   disabled={!question.trim() || isLoading}
-                  className="absolute right-2 top-2 p-2 text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                  className="absolute right-2 top-2 p-2 text-primary-400 hover:text-primary-300 disabled:text-white/40 disabled:cursor-not-allowed transition-all hover:scale-110"
                 >
                   <HiMagnifyingGlass className="h-5 w-5" />
                 </button>
               </form>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-white/50 mt-1">
                 ⌘+Enter で送信
               </p>
             </div>
@@ -130,33 +130,33 @@ const DocumentQA: React.FC<DocumentQAProps> = ({
 
           {/* Sources Sidebar */}
           {sources.length > 0 && (
-            <div className="w-80 border-l border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+            <div className="w-80 border-l border-white/10 p-4 overflow-y-auto">
+              <h3 className="text-sm font-medium text-white mb-3">
                 参照元 ({sources.length})
               </h3>
               <div className="space-y-3">
                 {sources.map((source, index) => (
                   <div
                     key={index}
-                    className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-sm"
+                    className="glass-morphism rounded-xl p-3 text-sm border border-white/10"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-1 flex-1 min-w-0">
-                        <HiDocumentText className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <span className="font-medium text-gray-900 dark:text-white truncate">
+                        <HiDocumentText className="h-4 w-4 text-white/70 flex-shrink-0" />
+                        <span className="font-medium text-white truncate">
                           {source.filename}
                         </span>
                       </div>
-                      <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                      <span className="text-xs text-white/60 ml-2 flex-shrink-0">
                         {Math.round(source.similarity * 100)}%
                       </span>
                     </div>
                     {source.pageNumber && (
-                      <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                      <div className="text-xs text-white/60 mb-2">
                         ページ {source.pageNumber}
                       </div>
                     )}
-                    <div className="text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
+                    <div className="text-white/80 text-xs leading-relaxed">
                       {source.preview}
                     </div>
                   </div>

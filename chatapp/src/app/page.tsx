@@ -38,21 +38,21 @@ export default function Home() {
       {/* メインコンテンツ */}
       <div className="flex-1 flex flex-col lg:ml-0">
         {/* モバイル用ヘッダー */}
-        <div className="lg:hidden bg-blue-900 text-white p-4 flex items-center justify-between">
+        <div className="lg:hidden glass-morphism text-white p-4 flex items-center justify-between shadow-glass">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="text-white p-2 hover:bg-blue-700 rounded"
+            className="glass-button text-white p-2 rounded-xl hover:scale-105 transition-transform"
             aria-label={isSidebarOpen ? "サイドバーを閉じる" : "サイドバーを開く"}
             aria-expanded={isSidebarOpen}
           >
             <FaBars size={20} />
           </button>
           <h1 className="text-lg font-semibold">AI Chat</h1>
-          <div className="w-8" /> {/* スペーサー */}
+          <div className="w-8" />
         </div>
 
         {/* チャットエリア */}
-        <div className="flex-1 bg-blue-200 min-h-0">
+        <div className="flex-1 min-h-0">
           <Chat />
         </div>
       </div>
